@@ -180,8 +180,8 @@ function _bear()
 alias bearme='_bear'
 
 # Customize to your needs...
-export TERM=screen-256color
-export EDITOR='vim'
+#export TERM=screen-256color
+#export EDITOR='vim'
 
 export PATH=/usr/lib64/qt-3.3/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/bin:$HOME/bin:/usr/local/sbin:/usr/sbin
 export PATH="$HOME/perl5/bin:$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
@@ -244,5 +244,5 @@ export FZF_DEFAULT_OPTS='
 --color info:150,prompt:110,spinner:150,pointer:167,marker:174
 '
 # Vi keybinding
-bindkey -v
+#bindkey -v
 
