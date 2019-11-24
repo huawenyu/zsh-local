@@ -14,7 +14,7 @@ export SAVEHIST=10000 # Number of entries
 export HISTSIZE=10000
 export HISTFILE=~/.zsh_history
 export HISTCONTROL=erasedups
-export HISTIGNORE="?:??:???:&:ls:[bf]g:exit:pwd:df*:free*:cd*:ls*:man*:vi*:clear:[ \t]*:hisotry*"
+export HISTIGNORE="?:??:???:&:ls:[bf]g:exit:pwd:free*:ls*:man*:clear:[ \t]*:hisotry*"
 setopt APPEND_HISTORY       # Don't erase history
 setopt EXTENDED_HISTORY     # Add additional data to history like timestamp
 setopt INC_APPEND_HISTORY   # Add immediately
@@ -24,9 +24,7 @@ setopt histignorespace
 setopt NO_HIST_BEEP         # Don't beep
 setopt SHARE_HISTORY        # Share history between session/terminals
 
-alias cd=' cd'
 alias pwd=' pwd'
-alias man=' man'
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
