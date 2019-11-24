@@ -10,10 +10,9 @@ export LC_ALL=en_US.UTF-8
 # By default 0.4 second delay after hit the <ESC>
 export KEYTIMEOUT=0
 
-SAVEHIST=10000 # Number of entries
-HISTSIZE=10000
-HISTFILE=~/.zsh_history
-export HISTFILE=.zhistory
+export SAVEHIST=10000 # Number of entries
+export HISTSIZE=10000
+export HISTFILE=~/.zsh_history
 export HISTCONTROL=erasedups
 export HISTIGNORE="?:??:???:&:ls:[bf]g:exit:pwd:df*:free*:cd*:ls*:man*:vi*:clear:[ \t]*:hisotry*"
 setopt APPEND_HISTORY       # Don't erase history
