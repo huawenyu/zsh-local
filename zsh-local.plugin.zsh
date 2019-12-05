@@ -1,4 +1,3 @@
-
 # fix issue:
 #    "perl: warning: Please check that your locale settings:"
 #
@@ -10,19 +9,19 @@ export LC_ALL=en_US.UTF-8
 # By default 0.4 second delay after hit the <ESC>
 export KEYTIMEOUT=0
 
-export SAVEHIST=10000 # Number of entries
-export HISTSIZE=10000
-export HISTFILE=~/.zsh_history
-export HISTCONTROL=erasedups
-export HISTIGNORE="?:??:???:&:ls:[bf]g:exit:pwd:free*:ls*:man*:clear:[ \t]*:hisotry*"
-setopt APPEND_HISTORY       # Don't erase history
-setopt EXTENDED_HISTORY     # Add additional data to history like timestamp
-setopt INC_APPEND_HISTORY   # Add immediately
-unsetopt HIST_FIND_NO_DUPS    # Don't show duplicates in search
-setopt HIST_IGNORE_SPACE    # Don't into history if have space pre-command.
+SAVEHIST=10000 # Number of entries
+HISTSIZE=10000
+HISTFILE=${HISTFILE:-$HOME/.zsh_history}
+HISTCONTROL=erasedups
+HISTIGNORE="?:??:???:&:ls:[bf]g:exit:pwd:free*:ls*:man*:clear:[ \t]*:hisotry*"
+setopt append_history       # Don't erase history
+setopt extended_history     # Add additional data to history like timestamp
+setopt inc_append_history   # Add immediately
+unsetopt hist_find_no_dups    # Don't show duplicates in search
+setopt hist_ignore_space    # Don't into history if have space pre-command.
 setopt histignorespace
-setopt NO_HIST_BEEP         # Don't beep
-setopt SHARE_HISTORY        # Share history between session/terminals
+setopt no_hist_beep         # Don't beep
+setopt share_history        # Share history between session/terminals
 
 alias pwd=' pwd'
 alias dict="$HOME/tools/dict"
@@ -34,6 +33,16 @@ alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
 #bindkey "^S" history-incremental-pattern-search-forward
+
+
+export FZF_DEFAULT_OPTS='
+--bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down 
+--color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 
+--color info:150,prompt:110,spinner:150,pointer:167,marker:174 
+'
+
+# see zplugin-init.zsh with Turbo Mode
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 
 # This will make C-z on the command line resume vi again, so you can toggle between them easily
