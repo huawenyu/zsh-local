@@ -240,12 +240,12 @@ alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
 
-if ! type "fzf" > /dev/null; then
-	if [ -f "$HOME/.fzf/bin/fzf" ]; then
-		mkdir -p "$HOME/bin"
-		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
-	fi
-fi
+#if ! type "fzf" > /dev/null; then
+#	if [ -f "$HOME/.fzf/bin/fzf" ]; then
+#		mkdir -p "$HOME/bin"
+#		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
+#	fi
+#fi
 
 export FZF_DEFAULT_OPTS='
 --bind=ctrl-p:up,ctrl-n:down
