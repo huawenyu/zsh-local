@@ -35,16 +35,6 @@ alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-
 #bindkey "^S" history-incremental-pattern-search-forward
 
 
-export FZF_DEFAULT_OPTS='
---bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down 
---color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 
---color info:150,prompt:110,spinner:150,pointer:167,marker:174 
-'
-
-# see zplugin-init.zsh with Turbo Mode
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-
 # This will make C-z on the command line resume vi again, so you can toggle between them easily
 foreground-vi() {
   fg %vi
@@ -292,18 +282,22 @@ alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
 
-#if ! type "fzf" > /dev/null; then
-#	if [ -f "$HOME/.fzf/bin/fzf" ]; then
-#		mkdir -p "$HOME/bin"
-#		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
-#	fi
-#fi
+if ! type "fzf" > /dev/null; then
+	if [ -f "$HOME/.fzf/bin/fzf" ]; then
+		mkdir -p "$HOME/bin"
+		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
+	fi
+fi
 
 export FZF_DEFAULT_OPTS='
---bind=ctrl-p:up,ctrl-n:down
---color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220
---color info:150,prompt:110,spinner:150,pointer:167,marker:174
+--bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down 
+--color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 
+--color info:150,prompt:110,spinner:150,pointer:167,marker:174 
 '
+
+# see zplugin-init.zsh with Turbo Mode
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 # Vi keybinding
 #bindkey -v
 
