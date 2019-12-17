@@ -189,8 +189,8 @@ function _bear()
 alias bearme='_bear'
 
 # Customize to your needs...
-#export TERM=screen-256color
-#export EDITOR='vim'
+export TERM=screen-256color
+export EDITOR='vim'
 
 if [ -d "/usr/local/bin" ]; then
   export PATH="/usr/local/bin:$PATH"
