@@ -192,8 +192,34 @@ alias bearme='_bear'
 #export TERM=screen-256color
 #export EDITOR='vim'
 
-export PATH=/usr/lib64/qt-3.3/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/bin:$HOME/bin:/usr/local/sbin:/usr/sbin
-export PATH="$HOME/perl5/bin:$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
+if [ -d "/usr/local/bin" ]; then
+  export PATH="/usr/local/bin:$PATH"
+fi
+
+if [ -d "/usr/.local/bin" ]; then
+  export PATH="/usr/.local/bin:$PATH"
+fi
+
+if [ -d "/usr/bin" ]; then
+  export PATH="/usr/bin:$PATH"
+fi
+
+if [ -d "/bin" ]; then
+  export PATH="/bin:$PATH"
+fi
+
+if [ -d "$HOME/bin" ]; then
+  export PATH="$HOME/bin:$PATH"
+fi
+
+if [ -d "/usr/local/sbin" ]; then
+  export PATH="/usr/local/sbin:$PATH"
+fi
+
+if [ -d "/usr/sbin" ]; then
+  export PATH="/usr/sbin:$PATH"
+fi
+
 
 export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:$HOME/perl5";
 export PERL_MB_OPT="--install_base $HOME/perl5";
@@ -217,10 +243,36 @@ export JAVA_HOME="/usr/lib/jvm/java-8-oracle"
 
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
-export PATH="/opt/ActiveTcl-8.6/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.cargo/bin:$PATH"
+
+if [ -d "/usr/lib64/qt-3.3/bin" ]; then
+  export PATH="/usr/lib64/qt-3.3/bin:$PATH"
+fi
+
+if [ -d "/usr/lib64/ccache" ]; then
+  export PATH="/usr/lib64/ccache:$PATH"
+fi
+
+if [ -d "/opt/ActiveTcl-8.6/bin" ]; then
+  export PATH="/opt/ActiveTcl-8.6/bin:$PATH"
+fi
+
+if [ -d "$HOME/.cargo/bin" ]; then
+  export PATH="$HOME/.cargo/bin:$PATH"
+fi
+
+if [ -d "$HOME/perl5/bin" ]; then
+  export PATH="$HOME/perl5/bin:$PATH"
+fi
+
+if [ -d "$HOME/.linuxbrew/bin" ]; then
+  export PATH="$HOME/.linuxbrew/bin:$HOME/.linuxbrew/sbin:$PATH"
+elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
+  export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+fi
+
+
+export PATH="$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
+
 
 export USESUDO=$(which sudo)
 export FORTIPKG=$HOME/fortipkg
