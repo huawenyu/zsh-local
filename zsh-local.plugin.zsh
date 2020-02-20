@@ -272,6 +272,8 @@ export FORTIPKG=$HOME/fortipkg
 # minicom line wrap: sudo -E minicom
 export MINICOM="-w"
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
+# Rust
+export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
 
 # todo.txt-cli
 export TODOTXT_DEFAULT_ACTION=ls
