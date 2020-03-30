@@ -23,6 +23,11 @@ setopt histignorespace
 setopt no_hist_beep         # Don't beep
 setopt share_history        # Share history between session/terminals
 
+# Comtomize config {{{1
+conf_fort=true
+conf_use_ftps=true
+# }}}
+
 alias pwd=' pwd'
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
@@ -75,13 +80,19 @@ function _mytail()
 };
 alias tail='_mytail'
 
-# ftpserver
-export LFTP_CMD='lftp -u test,test ftpsvr -e '
-export LFTP_DIR=upload/$USER
-#
-# sftpserver
-#export LFTP_CMD='lftp sftp://hyu:@ftpsvr -e '
-#export LFTP_DIR=$USER
+
+if $conf_fort ; then
+    if $conf_use_ftps ; then
+        # sftpserver
+        export LFTP_CMD='lftp sftp://hyu:@ftpsvr -e '
+        export LFTP_DIR=$USER
+    else
+        # ftpserver
+        export LFTP_CMD='lftp -u test,test ftpsvr -e '
+        export LFTP_DIR=upload/$USER
+    fi
+fi
+
 
 function _myftpls()
 {
@@ -264,8 +275,11 @@ fi
 export PATH="$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
 
 
-export USESUDO=$(which sudo)
-export FORTIPKG=$HOME/fortipkg
+if $conf_fort ; then
+    export USESUDO=$(which sudo)
+    export FORTIPKG=$HOME/fortipkg
+fi
+
 #export JEMALLOC_PATH=$HOME/project/jemalloc
 #export MALLOC_CONF="prof:true,prof_prefix:jeprof.out"
 
