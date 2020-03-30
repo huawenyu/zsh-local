@@ -82,13 +82,16 @@ alias tail='_mytail'
 
 
 if $conf_fort ; then
+    ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
+    #echo "### @Note the ftpsvr is ${ftpAddr} ###"
+
     if $conf_use_ftps ; then
         # sftpserver
-        export LFTP_CMD='lftp sftp://hyu:@ftpsvr -e '
+        export LFTP_CMD="lftp sftp://hyu:@${ftpAddr} -e "
         export LFTP_DIR=$USER
     else
         # ftpserver
-        export LFTP_CMD='lftp -u test,test ftpsvr -e '
+        export LFTP_CMD="lftp -u test,test ${ftpAddr} -e "
         export LFTP_DIR=upload/$USER
     fi
 fi
