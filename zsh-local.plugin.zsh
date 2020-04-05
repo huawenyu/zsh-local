@@ -275,7 +275,7 @@ elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
 fi
 
 
-export PATH="$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
+export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
 
 
 if $conf_fort ; then
