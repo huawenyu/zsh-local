@@ -25,7 +25,9 @@ setopt share_history        # Share history between session/terminals
 
 # Comtomize config {{{1
 conf_fort=true
-conf_use_ftps=true
+
+# Also should set ftpsvr in /etc/hosts
+conf_use_ftps=false
 # }}}
 
 alias pwd=' pwd'
