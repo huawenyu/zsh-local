@@ -291,8 +291,11 @@ fi
 # minicom line wrap: sudo -E minicom
 export MINICOM="-w"
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
+
 # Rust
-export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
+if hash rustc 2>/dev/null; then
+    export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
+fi
 
 # todo.txt-cli
 export TODOTXT_DEFAULT_ACTION=ls
