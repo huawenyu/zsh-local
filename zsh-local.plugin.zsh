@@ -120,6 +120,20 @@ function _myftpget()
 };
 alias ftpget='_myftpget'
 
+
+function _myftpmirror()
+{
+  if [ -z ${1} ]; then
+    echo "  Please give a mirror dir name!"
+  else
+    dname=${1}
+    echo "  Mirror '$dname'!"
+    eval "$LFTP_CMD 'cd $LFTP_DIR; mirror $dname; quit;'"
+  fi
+};
+alias ftpmirror='_myftpmirror'
+
+
 function _myftpput()
 {
   if [ -z ${1} ]; then
