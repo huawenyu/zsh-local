@@ -233,8 +233,8 @@ fi
 
 # fake sudo vim ~/root/etc/hosts
 #    ln -s /drives/c/Windows/System32/drivers/ ./root
-alias mysync-down="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
-alias mysync-up="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
+alias sync-push="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
+alias sync-pull="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
 
 
 export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:$HOME/perl5";
