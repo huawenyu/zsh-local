@@ -226,6 +226,16 @@ if [ -d "/usr/sbin" ]; then
   export PATH="/usr/sbin:$PATH"
 fi
 
+#parse_git_branch() {
+#     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+#}
+#export PS1="\[\033[32m\]\W\[\033[31m\]\$(parse_git_branch)\[\033[00m\] $ "
+
+# fake sudo vim ~/root/etc/hosts
+#    ln -s /drives/c/Windows/System32/drivers/ ./root
+alias mysync-down="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
+alias mysync-up="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
+
 
 export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:$HOME/perl5";
 export PERL_MB_OPT="--install_base $HOME/perl5";
