@@ -315,6 +315,7 @@ fi
 # minicom line wrap: sudo -E minicom
 export MINICOM="-w"
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
+export SSLKEYLOGFILE=~/sslkey.log
 
 # Rust
 if hash rustc 2>/dev/null; then
