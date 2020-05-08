@@ -350,3 +350,6 @@ export FZF_DEFAULT_OPTS='
 # Vi keybinding
 #bindkey -v
 
+# manpager cannot use pipe to link the commands
+#export MANPAGER="col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -"
+export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
