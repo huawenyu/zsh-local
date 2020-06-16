@@ -72,6 +72,46 @@ function Run()
 }
 
 
+# @param model buildnum product
+function _mysmbget()
+{
+    if [ -z ${1} ]; then
+        echo "script model buildnum [product=fos|fpx|<ls>]: no model. 'script 600E 1561'"
+        return 1
+    else
+        model=${1}
+    fi
+
+    if [ -z ${2} ]; then
+        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: no buildnum. 'script 400E 0288 fpx'"
+        return 1
+    else
+        buildnum=${2}
+    fi
+
+    if [ -z ${3} ]; then
+        echo "product: 'fos'"
+        product="fos"
+    else
+        product=${3}
+    fi
+
+    if [ ${product} == "fos" ]; then
+        echo "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
+    elif [ ${product} == "fpx" ]; then
+        echo "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+    elif [ ${product} == "ls" ]; then
+        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
+    else
+        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: script 600E 1561 ls"
+        return 1
+    fi
+};
+alias smbget='_mysmbget'
+
+
 function _mytail()
 {
   if [ -t 0 ]; then
