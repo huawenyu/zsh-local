@@ -97,19 +97,59 @@ function _mysmbget()
     fi
 
     if [ ${product} == "fos" ]; then
-        echo "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
-        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
     elif [ ${product} == "fpx" ]; then
-        echo "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
     elif [ ${product} == "ls" ]; then
-        eval "smbclient //imagesvr/Images -U 'fortinet-us/hyu' -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
     else
         echo "Args likes, model buildnum [product=fos|fpx|<ls>]: script 600E 1561 ls"
         return 1
     fi
 };
 alias smbget='_mysmbget'
+
+# config: ~/.smbclient.conf
+function _mysmbme()
+{
+put_files=("patch.diff" \
+  "patch.eco.diff" \
+  "fgtcoveragebuild.tar.xz" \
+  "fgtcoveragebuild.tar.bz2" \
+  "checklist.txt" \
+  "fortios.qcow2" \
+  "fortiproxy.qcow2" \
+  "image.out.vmware.zip" \
+  "image.out.ovf.zip" \
+  "image.out.hyperv.zip" \
+  "image.out.gcp.tar.gz" \
+  "image.out.kvm.zip" \
+  "image.out.gcp.tar.gz" \
+)
+
+    if [ -z ${1} ]; then
+        dname=${PWD##*/}
+        echo "  Working dir '$dname'!"
+
+        #eval "$LFTP_CMD 'cd $LFTP_DIR; rm -fr $dname; quit;'"
+        #eval "smbclient //imagesvr/images -U 'fortinet-us/hyu' -c 'mkdir hyu; cd hyu; rmdir $dname; mkdir $dname; cd $dname; put image.out; q;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'mkdir hyu; q;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; rmdir $dname; q;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; mkdir $dname; q;'"
+
+        for one_file in "${put_files[@]}"
+        do
+            if [ -f ${one_file} ]; then
+                eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; put ${one_file}; q;'"
+            fi
+        done
+
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; pwd; ls; q;'"
+    fi
+};
+alias smbme='_mysmbme'
 
 
 function _mytail()
