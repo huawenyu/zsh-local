@@ -316,6 +316,10 @@ if [ -d "/usr/.local/bin" ]; then
   export PATH="/usr/.local/bin:$PATH"
 fi
 
+if [ -d "/snap/bin" ]; then
+  export PATH="/snap/bin:$PATH"
+fi
+
 if [ -d "/usr/bin" ]; then
   export PATH="/usr/bin:$PATH"
 fi
