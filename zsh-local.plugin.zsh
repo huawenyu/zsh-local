@@ -72,6 +72,9 @@ function Run()
 }
 
 
+# add user/pass to: ~/.smbclient.conf
+# disable log in /etc/samba/smb.conf
+#      syslog = 0
 # @param model buildnum product
 function _mysmbget()
 {
@@ -116,6 +119,7 @@ function _mysmbme()
 {
 put_files=("patch.diff" \
   "patch.eco.diff" \
+  "image.out" \
   "fgtcoveragebuild.tar.xz" \
   "fgtcoveragebuild.tar.bz2" \
   "checklist.txt" \
@@ -150,6 +154,18 @@ put_files=("patch.diff" \
     fi
 };
 alias smbme='_mysmbme'
+
+
+function _mysmblogin()
+{
+    if [ -z ${1} ]; then
+        dname=${PWD##*/}
+        echo "  Working dir '$dname'!"
+
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day"
+    fi
+};
+alias smblogin='_mysmblogin'
 
 
 function _mytail()
