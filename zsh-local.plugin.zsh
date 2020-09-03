@@ -36,6 +36,7 @@ alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
 alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
 alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-session -t {}"
+#alias ls='ls -lart'
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
@@ -86,7 +87,9 @@ function _mysmbget()
     fi
 
     if [ -z ${2} ]; then
-        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: no buildnum. 'script 400E 0288 fpx'"
+        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: no buildnum."
+        echo "Sample: smbget 400E 0288 fpx"
+        echo "        smbget VMWARE 0288 fpx"
         return 1
     else
         buildnum=${2}
