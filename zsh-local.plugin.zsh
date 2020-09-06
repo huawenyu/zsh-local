@@ -403,6 +403,9 @@ elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
   export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 fi
 
+## debug neovim python plugin:
+#export NVIM_PYTHON_LOG_FILE=/tmp/log
+#export NVIM_PYTHON_LOG_LEVEL=DEBUG
 
 export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
 
