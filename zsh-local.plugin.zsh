@@ -309,6 +309,7 @@ function _bear()
 alias bearme='_bear'
 
 # Customize to your needs...
+# Tmux recognize
 export TERM=screen-256color
 export EDITOR='vim'
 
