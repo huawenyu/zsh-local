@@ -408,7 +408,7 @@ fi
 #export NVIM_PYTHON_LOG_FILE=/tmp/log
 #export NVIM_PYTHON_LOG_LEVEL=DEBUG
 
-export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/dotwiki/tool:$PATH";
+export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
 
 
 if $conf_fort ; then
