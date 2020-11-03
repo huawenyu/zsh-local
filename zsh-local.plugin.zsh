@@ -9,6 +9,10 @@ export LC_ALL=en_US.UTF-8
 # By default 0.4 second delay after hit the <ESC>
 export KEYTIMEOUT=0
 
+# If  set,  the shell does not follow symbolic links when executing commands
+#   such as cd that change the current working directory
+set -P
+
 SAVEHIST=10000 # Number of entries
 HISTSIZE=10000
 HISTFILE=${HISTFILE:-$HOME/.zsh_history}
