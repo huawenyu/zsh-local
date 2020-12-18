@@ -163,14 +163,28 @@ put_files=("patch.diff" \
 };
 alias smbme='_mysmbme'
 
-
+# image: Swap-1Day
+# devqa: DevQA/Image
 function _mysmblogin()
 {
     if [ -z ${1} ]; then
         dname=${PWD##*/}
-        echo "  Working dir '$dname'!"
+        echo "self <server-type>  Working dir '$dname'!"
 
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day"
+    else
+        duttype=${1}
+        if [ "$duttype" = "image" ]; then
+            svr="imagesvr"
+            subpath1="/Swap-1Day"
+        elif [ "$duttype" = "devqa" ]; then
+            svr="devqasvr"
+            subpath1="/DevQA"
+        else
+            echo "self <server> like 'image|devqa' Working dir '$dname'!"
+        fi
+
+        eval "smbclient -A ~/.smbclient.conf //$svr$subpath1"
     fi
 };
 alias smblogin='_mysmblogin'
