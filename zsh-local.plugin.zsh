@@ -433,6 +433,7 @@ fi
 
 export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
 
+export TASKDDATA=/var/lib/taskd
 
 if $conf_fort ; then
     export USESUDO=$(which sudo)
