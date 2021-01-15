@@ -451,6 +451,7 @@ export SSLKEYLOGFILE=~/sslkey.log
 # Rust
 if hash rustc 2>/dev/null; then
     export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
+    export PATH="$HOME/.cargo/bin:$PATH";
 fi
 
 # todo.txt-cli
