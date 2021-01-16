@@ -55,8 +55,9 @@ function _task_share_screen()
 USAGE=$(cat <<-END
 	  server:
 	      this add|del user1 ses_name
+	      tshare add user1
 	  user1:
-	      ssh user1@host -t 'tmux -S /tmp/tmux_share attach -t share'
+	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
 END
 )
 
@@ -70,7 +71,7 @@ END
         if [ ${action} == "add" ]; then
             # donothing
             :
-        elif [ ${product} == "del" ]; then
+        elif [ ${action} == "del" ]; then
             :
         else
             echo "${USAGE}"
@@ -95,16 +96,19 @@ END
             sudo ln -s /bin/bash /bin/rbash
         fi
         cd /home
-        sudo mkdir ${userName}
+        sudo mkdir -p ${userName}
         sudo chmod 755 ${userName}
-        sudo useradd -s /bin/rbash -d /home/${userName}
+        sudo useradd -s /bin/rbash -d /home/${userName} ${userName}
+        sudo passwd ${userName}
 
         # create the 'share' session but not attach it.
         tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
-        sudo chmod 777 ./tmux_${sesName}
-        tmux -S /tmp/tmux_${sesName} attach -t %{sesName}
-    elif [ ${product} == "del" ]; then
-        sudo userdel -r ${userName}
+        sudo chmod 777 /tmp/tmux_${sesName}
+        tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+    elif [ ${action} == "del" ]; then
+        #sudo userdel -r ${userName}
+        sudo killall -u ${userName} && sudo deluser --remove-home -f ${userName}
+        sudo rm -fr /tmp/tmux_${sesName}
     fi
 };
 alias tshare='_task_share_screen'
