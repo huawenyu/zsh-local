@@ -93,22 +93,23 @@ END
 
     if [ ${action} == "add" ]; then
         if [ ! -f "/bin/rbash" ]; then
-            sudo ln -s /bin/bash /bin/rbash
+            Run sudo ln -s /bin/bash /bin/rbash
         fi
-        cd /home
-        sudo mkdir -p ${userName}
-        sudo chmod 755 ${userName}
-        sudo useradd -s /bin/rbash -d /home/${userName} ${userName}
-        sudo passwd ${userName}
+        Run cd /home
+        Run sudo mkdir -p ${userName}
+        Run sudo chmod 755 ${userName}
+        Run sudo useradd -s /bin/rbash -d /home/${userName} ${userName}
+        Run sudo passwd ${userName}
 
         # create the 'share' session but not attach it.
-        tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
-        sudo chmod 777 /tmp/tmux_${sesName}
-        tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+        Run tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
+        Run sudo chmod 777 /tmp/tmux_${sesName}
+        Run tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
     elif [ ${action} == "del" ]; then
-        #sudo userdel -r ${userName}
-        sudo killall -u ${userName} && sudo deluser --remove-home -f ${userName}
-        sudo rm -fr /tmp/tmux_${sesName}
+        #Run sudo userdel -r ${userName}
+        Run sudo killall -u ${userName}
+        Run sudo deluser --remove-home -f ${userName}
+        Run sudo rm -fr /tmp/tmux_${sesName}
     fi
 };
 alias tshare='_task_share_screen'
@@ -139,14 +140,15 @@ zman() {
 unsetopt correct_all
 unsetopt nomatch
 
+# dryrun="" Run ls -lart
 function Run()
 {
-    if [ "$dryrun" == "off" ]; then
-        echo "Executing $*"
-        eval "$@"
-    else
-        echo "Executing $*"
+    if [ -v "dryrun" ]; then
+        echo "[dryrun]:	$*"
         return 0
+    else
+        #echo "Executing $*"
+        eval "$@"
     fi
 }
 
