@@ -33,6 +33,8 @@ conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
 # }}}
+#
+
 
 alias pwd=" pwd | sed 's/^/ /g'"
 alias dict="$HOME/tools/dict"
@@ -42,6 +44,73 @@ alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
 alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-session -t {}"
 #alias ls='ls -lart'
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/."
+
+
+# @param action=add|del username
+function _task_share_screen()
+{
+# @Note:
+#    indent tabs (i.e., '\t') will be stripped out,
+#     indent with spaces will be left in.
+USAGE=$(cat <<-END
+	  server:
+	      this add|del user1 ses_name
+	  user1:
+	      ssh user1@host -t 'tmux -S /tmp/tmux_share attach -t share'
+END
+)
+
+    if [ -z ${1} ]; then
+        action="add"
+        echo "${USAGE}"
+        return 0
+    else
+        action=${1}
+
+        if [ ${action} == "add" ]; then
+            # donothing
+            :
+        elif [ ${product} == "del" ]; then
+            :
+        else
+            echo "${USAGE}"
+            return 0
+        fi
+    fi
+
+    if [ -z ${2} ]; then
+        userName="guest"
+    else
+        userName=${2}
+    fi
+
+    if [ -z ${3} ]; then
+        sesName="share"
+    else
+        sesName=${3}
+    fi
+
+    if [ ${action} == "add" ]; then
+        if [ ! -f "/bin/rbash" ]; then
+            sudo ln -s /bin/bash /bin/rbash
+        fi
+        cd /home
+        sudo mkdir ${userName}
+        sudo chmod 755 ${userName}
+        sudo useradd -s /bin/rbash -d /home/${userName}
+
+        # create the 'share' session but not attach it.
+        tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
+        sudo chmod 777 ./tmux_${sesName}
+        tmux -S /tmp/tmux_${sesName} attach -t %{sesName}
+    elif [ ${product} == "del" ]; then
+        sudo userdel -r ${userName}
+    fi
+};
+alias tshare='_task_share_screen'
+
+alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
@@ -95,7 +164,7 @@ function _mysmbget()
         echo "Args likes, model buildnum [product=fos|fpx|<ls>]: no buildnum."
         echo "Sample: smbget 400E 0288 fpx"
         echo "        smbget VMWARE 0288 fpx"
-        return 1
+        return 0
     else
         buildnum=${2}
     fi
