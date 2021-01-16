@@ -56,6 +56,7 @@ USAGE=$(cat <<-END
 	  server:
 	      this add|del user1 ses_name
 	      tshare add user1
+	      tshare del user1
 	  user1:
 	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
 END
@@ -105,8 +106,11 @@ END
         Run tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
         Run sudo chmod 777 /tmp/tmux_${sesName}
         Run tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+
+        echo "ShareLink: ssh ${userName}@work -t 'tmux -S /tmp/tmux_${sesName} attach -t ${sesName}'"
     elif [ ${action} == "del" ]; then
         #Run sudo userdel -r ${userName}
+        Run tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
         Run sudo killall -u ${userName}
         Run sudo deluser --remove-home -f ${userName}
         Run sudo rm -fr /tmp/tmux_${sesName}
