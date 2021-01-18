@@ -1,3 +1,7 @@
+#!/bin/bash
+#
+# Global {{{1
+# locale {{{2
 # fix issue:
 #    "perl: warning: Please check that your locale settings:"
 #
@@ -9,6 +13,7 @@ export LC_ALL=en_US.UTF-8
 # By default 0.4 second delay after hit the <ESC>
 export KEYTIMEOUT=0
 
+# basic {{{2
 # If  set,  the shell does not follow symbolic links when executing commands
 #   such as cd that change the current working directory
 set -P
@@ -27,15 +32,92 @@ setopt histignorespace
 setopt no_hist_beep         # Don't beep
 setopt share_history        # Share history between session/terminals
 
-# Comtomize config {{{1
-conf_fort=true
 
+# color {{{2
+#   Black        0;30     Dark Gray     1;30
+#   Red          0;31     Light Red     1;31
+#   Green        0;32     Light Green   1;32
+#   Brown/Orange 0;33     Yellow        1;33
+#   Blue         0;34     Light Blue    1;34
+#   Purple       0;35     Light Purple  1;35
+#   Cyan         0;36     Light Cyan    1;36
+#   Light Gray   0;37     White         1;37
+#And then use them like this in your script:
+#
+#    .---------- constant part!
+#    vvvv vvvv-- the code from above
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# basic helper functions {{{2
+#
+# function dry Run {{{3
+# dryrun="" Run ls -lart
+function Run()
+{
+    if [ -v "dryrun" ]; then
+        echo "[dryrun]:	$*"
+        return 0
+    else
+        #echo "Executing $*"
+        eval "$@"
+    fi
+}
+
+
+# function IsNum {{{3
+# https://stackoverflow.com/questions/5431909/returning-a-boolean-from-a-bash-function
+# Usage: if IsNum $1; then echo "is number"; else echo "nopes"; fi
+function IsNum()
+{
+    if [ -n "$var" ] && [ "$var" -eq "$var" ] 2>/dev/null; then
+        # 0 = true
+        return 0
+    else
+        # 1 = false
+        return 1
+    fi
+}
+
+
+# function IsDir {{{3
+function IsDir()
+{
+    if [ -d "$1" ]
+    then
+        # 0 = true
+        return 0
+    else
+        # 1 = false
+        return 1
+    fi
+}
+
+
+# Comtomize config {{{1
+# local encode info
+if [ -f "$HOME/.local/local" ]; then
+    #echo "load local succ!"
+    source $HOME/.local/local
+else
+    echo "no local loaded!"
+fi
+
+# dev-var
+conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
-# }}}
-#
+export HEYTMUX_PATH="$HOME/script/heytmux"
 
 
+# PS1 {{{2
+#parse_git_branch() {
+#     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
+#}
+#export PS1="\[\033[32m\]\W\[\033[31m\]\$(parse_git_branch)\[\033[00m\] $ "
+
+
+# alias: pwd, dict, sharepatch {{{2
 alias pwd=" pwd | sed 's/^/ /g'"
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
@@ -45,16 +127,23 @@ alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-
 #alias ls='ls -lart'
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
+# fake sudo vim ~/root/etc/hosts
+#    ln -s /drives/c/Windows/System32/drivers/ ./root
+alias sync-push="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
+alias sync-pull="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
 
+
+# pair-programer: share terminal screen {{{2
 # @param action=add|del username
 function _task_share_screen()
 {
 # @Note:
 #    indent tabs (i.e., '\t') will be stripped out,
 #     indent with spaces will be left in.
+#     ${FUNCNAME[0]} not show current function name, but $0 works
 USAGE=$(cat <<-END
 	  server:
-	      this add|del user1 ses_name
+	      $0 add|del user1 ses_name
 	      tshare add user1
 	      tshare del user1
 	  user1:
@@ -63,9 +152,8 @@ END
 )
 
     if [ -z ${1} ]; then
-        action="add"
         echo "${USAGE}"
-        return 0
+        return 1
     else
         action=${1}
 
@@ -76,7 +164,7 @@ END
             :
         else
             echo "${USAGE}"
-            return 0
+            return 1
         fi
     fi
 
@@ -121,11 +209,167 @@ alias tshare='_task_share_screen'
 alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
 alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
 
+
+# tmux layout manage {{{2
+# We also can use `heytmux` to do this job, pls remember change the window's name
+# The tmux `default` name:
+#    Nested-tmux by another sock-name: tmux -L child -f ~/.tmux.conf.child
+#    Kill them:                        tmux -L child kill-session
+# @param mode[top|side] #bugnumber 'bug-summary'
+function _tmux_layout_man()
+{
+# @Note:
+#    indent tabs (i.e., '\t') will be stripped out,
+#     indent with spaces will be left in.
+#     ${FUNCNAME[0]} not show current function name, but $0 works
+#	  $0 gen|cp|top|side,default=cp 0123456 "summary block traffic under proxy"
+USAGE=$(cat <<-END
+	  $0 gen|cp name
+	  $0   [no-args, like: $0 gen default]
+	  $0 gen <name-of-template-layout>
+	  $0 cp nameLayout nameWindow bugNum
+END
+)
+
+    # @args:action
+    if [ -z ${1} ]; then
+        action='gen'
+        layout='default'
+        echo "${USAGE}"
+    else
+        action=$1
+        shift
+    fi
+
+    # @args:layout
+    if [ ${action} == "gen" ]; then
+        if [ -z ${1} ]; then
+            layout='default'
+        else
+            layout=$1
+            shift
+        fi
+    elif [ ${action} == "cp" ]; then
+        if [ -z ${1} ]; then
+            echo "${USAGE}"
+            echo "\t args: $0 cp ${RED}nameLayout${NC} nameWindow bugNum"
+            return 1
+        else
+            layout=$1
+            shift
+        fi
+
+        # @args:nameWindow
+        if [ -z ${1} ]; then
+            echo "${USAGE}"
+            echo "\t args: $0 cp nameLayout ${RED}nameWindow${NC} bugNum"
+            return 1
+        else
+            nameWindow=$1
+            shift
+        fi
+
+        # @args:bugNum
+        if [ -z ${1} ]; then
+            echo "${USAGE}"
+            echo "\t args: $0 cp nameLayout nameWindow ${RED}bugNum${NC}"
+            return 1
+        else
+            bugNum=$1
+            shift
+        fi
+    else
+        echo "${USAGE}"
+        return 1
+    fi
+
+
+    # do-task
+    if [ ${action} == "gen" ]; then
+        Run tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
+    elif [ ${action} == "cp" ]; then
+        #   #!/bin/bash
+        #
+        #   source /tmp/tmux.layout
+        #
+        #   nameLayout='mylayout1'
+        #   echo ${nameLayout}
+        #   echo ${!nameLayout2}
+        #
+        #   if [ ! -z "${!nameLayout}" ]; then
+        #   	echo "\$var is NOT empty"
+        #   fi
+        #
+        #   if [ ! -z "${!nameLayout2}" ]; then
+        #   	echo "\$var2 is NOT empty"
+        #   fi
+        #
+        #   exit 1
+        #
+        #   suffix=bzz
+        #   declare prefix_$suffix=mystr
+        #
+        #   # Then
+        #   varname=prefix_$suffix
+        #   echo ${varname}
+        #   echo ${!varname}
+
+        # <nameLayout>='layoutString'
+        source /tmp/tmux.layout
+
+        { # try
+
+            #command1 &&
+            ##save your output
+
+            eval layoutString='$'${layout}
+            if [ ! -z ${layoutString+x} ]; then
+                echo "Tmux-layout '${layout}': ${layoutString}"
+
+                if [ -f "${HEYTMUX_PATH}/${layout}.yml" ]; then
+                    Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${HEYTMUX_PATH}/${layout}.yml"
+                    Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
+                else
+                    echo "Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${HEYTMUX_PATH}'"
+                    return 1
+                fi
+            fi
+        } || { # catch
+            # save log for exception 
+            echo "Please gen the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
+            echo "    $0 gen ${layout}"
+            return 1
+        }
+
+    elif [ ${layout} == "top" ]; then
+        Run tmux kill-pane -a
+        Run tmux split-window -v -p 80
+        Run tmux split-window -h -p 70 -t 1
+        Run tmux split-window -h -p 50
+        Run tmux select-pane -t 4
+        Run tmux send-keys "new-doc.sh" Space "${bugnumber}" Enter
+        #Run tmux send-keys 'echo music' 'Enter'
+        #Run tmux select-pane -t 2
+    elif [ ${product} == "right" ]; then
+        Run tmux kill-pane -a
+        Run tmux split-window -v -p 80
+        Run tmux split-window -h -p 70 -t 1
+        Run tmux split-window -h -p 50
+        #Run tmux send-keys 'echo key' 'Enter'
+        #Run tmux send-keys 'echo music' 'Enter'
+        #Run tmux select-pane -t 2
+    else
+        echo "Support layouts: gen,cp; top,right"
+    fi
+};
+alias tlayout='_tmux_layout_man'
+
+
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
 #bindkey "^S" history-incremental-pattern-search-forward
 
-
+# function foreground-vi {{{2
 # This will make C-z on the command line resume vi again, so you can toggle between them easily
 foreground-vi() {
   fg %vi
@@ -144,19 +388,7 @@ zman() {
 unsetopt correct_all
 unsetopt nomatch
 
-# dryrun="" Run ls -lart
-function Run()
-{
-    if [ -v "dryrun" ]; then
-        echo "[dryrun]:	$*"
-        return 0
-    else
-        #echo "Executing $*"
-        eval "$@"
-    fi
-}
-
-
+# function _mysmbget {{{2
 # add user/pass to: ~/.smbclient.conf
 # disable log in /etc/samba/smb.conf
 #      syslog = 0
@@ -201,6 +433,7 @@ function _mysmbget()
 };
 alias smbget='_mysmbget'
 
+# function _mysmbme {{{2
 # config: ~/.smbclient.conf
 function _mysmbme()
 {
@@ -242,6 +475,7 @@ put_files=("patch.diff" \
 };
 alias smbme='_mysmbme'
 
+# function _mysmblogin {{{2
 # image: Swap-1Day
 # devqa: DevQA/Image
 function _mysmblogin()
@@ -269,6 +503,7 @@ function _mysmblogin()
 alias smblogin='_mysmblogin'
 
 
+# function _mytail {{{2
 function _mytail()
 {
   if [ -t 0 ]; then
@@ -280,6 +515,7 @@ function _mytail()
 alias tail='_mytail'
 
 
+# function prepare ftp {{{2
 if $conf_fort ; then
     ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
     #echo "### @Note the ftpsvr is ${ftpAddr} ###"
@@ -296,12 +532,15 @@ if $conf_fort ; then
 fi
 
 
+# function _myftpls {{{2
 function _myftpls()
 {
     eval "$LFTP_CMD 'cd $LFTP_DIR; ls; quit;'"
 };
 alias ftpls='_myftpls'
 
+
+# function _myftpget {{{2
 function _myftpget()
 {
   if [ -z ${1} ]; then
@@ -318,6 +557,7 @@ function _myftpget()
 alias ftpget='_myftpget'
 
 
+# function _myftpmirror {{{2
 function _myftpmirror()
 {
   if [ -z ${1} ]; then
@@ -331,6 +571,7 @@ function _myftpmirror()
 alias ftpmirror='_myftpmirror'
 
 
+# function _myftpput {{{2
 function _myftpput()
 {
   if [ -z ${1} ]; then
@@ -346,6 +587,8 @@ function _myftpput()
 };
 alias ftpput='_myftpput'
 
+
+# function _myftprm {{{2
 function _myftprm()
 {
     if [ -z ${1} ]; then
@@ -364,6 +607,8 @@ function _myftprm()
 };
 alias ftprm='_myftprm'
 
+
+# function _myftp {{{2
 function _myftp()
 {
   if [ -z ${1} ]; then
@@ -387,6 +632,8 @@ function _myftp()
 };
 alias ftpme='_myftp'
 
+
+# function _bear {{{2
 # used to generate the c/c++ ccls indexer db: ccls clang makefile
 function _bear()
 {
@@ -405,11 +652,16 @@ function _bear()
 };
 alias bearme='_bear'
 
+
+# Setup env vars {{{1
+#
+# ENV-TERM {{{2
 # Customize to your needs...
 # Tmux recognize
 export TERM=screen-256color
 export EDITOR='vim'
 
+# ENV-PATH {{{2
 if [ -d "/usr/local/bin" ]; then
   export PATH="/usr/local/bin:$PATH"
 fi
@@ -445,16 +697,6 @@ fi
 if [ -d "$HOME/bin" ]; then
   export PATH="$HOME/bin:$PATH"
 fi
-
-#parse_git_branch() {
-#     git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/ (\1)/'
-#}
-#export PS1="\[\033[32m\]\W\[\033[31m\]\$(parse_git_branch)\[\033[00m\] $ "
-
-# fake sudo vim ~/root/etc/hosts
-#    ln -s /drives/c/Windows/System32/drivers/ ./root
-alias sync-push="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
-alias sync-pull="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
 
 
 export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:$HOME/perl5";
@@ -512,8 +754,15 @@ fi
 
 export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
 
+# task, todos {{{2
 export TASKDDATA=/var/lib/taskd
+# todo.txt-cli
+export TODOTXT_DEFAULT_ACTION=ls
+#alias t='$HOME/tools/todo.txt-cli-ex/todo.sh -d $HOME/tools/todo.txt-cli-ex/todo.cfg'
+alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 
+
+# used develop {{{2
 if $conf_fort ; then
     export USESUDO=$(which sudo)
     export FORTIPKG=$HOME/fortipkg
@@ -527,21 +776,17 @@ export MINICOM="-w"
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
 export SSLKEYLOGFILE=~/sslkey.log
 
-# Rust
+# lang-Rust {{{2
 if hash rustc 2>/dev/null; then
     export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
     export PATH="$HOME/.cargo/bin:$PATH";
 fi
 
-# todo.txt-cli
-export TODOTXT_DEFAULT_ACTION=ls
-#alias t='$HOME/tools/todo.txt-cli-ex/todo.sh -d $HOME/tools/todo.txt-cli-ex/todo.cfg'
-alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
-
 # Disable warning messsage:
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
 
+# fzf {{{2
 if ! type "fzf" > /dev/null; then
 	if [ -f "$HOME/.fzf/bin/fzf" ]; then
 		mkdir -p "$HOME/bin"
@@ -549,10 +794,11 @@ if ! type "fzf" > /dev/null; then
 	fi
 fi
 
+# fzf: global config {{{3
 export FZF_DEFAULT_OPTS='
---bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down 
---color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 
---color info:150,prompt:110,spinner:150,pointer:167,marker:174 
+--bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down
+--color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220
+--color info:150,prompt:110,spinner:150,pointer:167,marker:174
 '
 
 # see zplugin-init.zsh with Turbo Mode
@@ -564,3 +810,4 @@ export FZF_DEFAULT_OPTS='
 # manpager cannot use pipe to link the commands
 #export MANPAGER="col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -"
 export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+
