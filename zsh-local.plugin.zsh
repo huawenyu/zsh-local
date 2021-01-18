@@ -51,6 +51,34 @@ NC='\033[0m' # No Color
 
 # basic helper functions {{{2
 #
+# https://mrigank11.github.io/2018/03/zsh-auto-completion/
+# function Usage {{{3
+function _usage()
+{
+}
+function _Usage()
+{
+# @Note:
+#    indent tabs (i.e., '\t') will be stripped out,
+#     indent with spaces will be left in.
+#     ${FUNCNAME[0]} not show current function name, but $0 works
+USAGE=$(cat <<-END
+	  dryrun: dryrun=1 Run ls -lart
+	      $0 add|del user1 ses_name
+	      tshare add user1
+	      tshare del user1
+	  tlayout: new | list | select | clone
+	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
+END
+)
+
+    echo "${USAGE}"
+    return 0
+}
+compdef _usage help
+alias help='_Usage'
+
+
 # function dry Run {{{3
 # dryrun="" Run ls -lart
 function Run()
@@ -60,6 +88,17 @@ function Run()
         return 0
     else
         #echo "Executing $*"
+        eval "$@"
+    fi
+}
+
+
+# function Echo {{{3
+function Echo()
+{
+    if [ -x /usr/bin/boxes ]; then
+        echo "$*" | boxes
+    else
         eval "$@"
     fi
 }
@@ -137,10 +176,6 @@ alias sync-pull="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/shar
 # @param action=add|del username
 function _task_share_screen()
 {
-# @Note:
-#    indent tabs (i.e., '\t') will be stripped out,
-#     indent with spaces will be left in.
-#     ${FUNCNAME[0]} not show current function name, but $0 works
 USAGE=$(cat <<-END
 	  server:
 	      $0 add|del user1 ses_name
@@ -218,40 +253,38 @@ alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
 # @param mode[top|side] #bugnumber 'bug-summary'
 function _tmux_layout_man()
 {
-# @Note:
-#    indent tabs (i.e., '\t') will be stripped out,
-#     indent with spaces will be left in.
 #     ${FUNCNAME[0]} not show current function name, but $0 works
 #	  $0 gen|cp|top|side,default=cp 0123456 "summary block traffic under proxy"
 USAGE=$(cat <<-END
-	  $0 gen|cp name
-	  $0   [no-args, like: $0 gen default]
-	  $0 gen <name-of-template-layout>
-	  $0 cp nameLayout nameWindow bugNum
+	  $0  list
+	  $0  new|select [layout, 'default']
+	  $0  clone nameLayout nameWindow bugNum
 END
 )
 
     # @args:action
     if [ -z ${1} ]; then
-        action='gen'
-        layout='default'
-        echo "${USAGE}"
+        action='list'
+        Echo "${USAGE}"
     else
         action=$1
         shift
     fi
 
     # @args:layout
-    if [ ${action} == "gen" ]; then
+    if [ ${action} == "list" ]; then
+        Run cat /tmp/tmux.layout| cut -d "=" -f 1
+        return 0
+    elif [ ${action} == "new" ] || [ ${action} == "select" ]; then
         if [ -z ${1} ]; then
             layout='default'
         else
             layout=$1
             shift
         fi
-    elif [ ${action} == "cp" ]; then
+    elif [ ${action} == "clone" ]; then
         if [ -z ${1} ]; then
-            echo "${USAGE}"
+            Echo "${USAGE}"
             echo "\t args: $0 cp ${RED}nameLayout${NC} nameWindow bugNum"
             return 1
         else
@@ -261,7 +294,7 @@ END
 
         # @args:nameWindow
         if [ -z ${1} ]; then
-            echo "${USAGE}"
+            Echo "${USAGE}"
             echo "\t args: $0 cp nameLayout ${RED}nameWindow${NC} bugNum"
             return 1
         else
@@ -271,7 +304,7 @@ END
 
         # @args:bugNum
         if [ -z ${1} ]; then
-            echo "${USAGE}"
+            Echo "${USAGE}"
             echo "\t args: $0 cp nameLayout nameWindow ${RED}bugNum${NC}"
             return 1
         else
@@ -279,15 +312,26 @@ END
             shift
         fi
     else
-        echo "${USAGE}"
+        Echo "${USAGE}"
         return 1
     fi
 
 
     # do-task
-    if [ ${action} == "gen" ]; then
+    if [ ${action} == "new" ]; then
         Run tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
-    elif [ ${action} == "cp" ]; then
+        return 0
+    elif [ ${action} == "select" ]; then
+        # <nameLayout>='layoutString'
+        source /tmp/tmux.layout
+
+        eval layoutString='$'${layout}
+        if [ ! -z ${layoutString+x} ]; then
+            echo "Tmux-layout '${layout}': ${layoutString}"
+            Run tmux select-layout "'${layoutString}'"
+            return 0
+        fi
+    elif [ ${action} == "clone" ]; then
         #   #!/bin/bash
         #
         #   source /tmp/tmux.layout
@@ -361,6 +405,7 @@ END
     else
         echo "Support layouts: gen,cp; top,right"
     fi
+    return 0
 };
 alias tlayout='_tmux_layout_man'
 
