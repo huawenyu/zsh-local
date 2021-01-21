@@ -125,7 +125,7 @@ function Echo()
     if HasCmd boxes; then
         echo "$*" | boxes
     else
-        eval "$@"
+        echo "$*"
     fi
 }
 
@@ -626,7 +626,6 @@ function _my_pre_ftp()
         fi
     fi
 };
-
 
 
 # function _myftpls {{{2
