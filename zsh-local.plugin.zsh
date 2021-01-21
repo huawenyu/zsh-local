@@ -63,9 +63,6 @@ NC='\033[0m' # No Color
 #
 # https://mrigank11.github.io/2018/03/zsh-auto-completion/
 # function Usage {{{3
-function _usage()
-{
-}
 function _Usage()
 {
 # @Note:
@@ -181,7 +178,7 @@ if [ -f "$HOME/.local/local" ]; then
     #echo "load local succ!"
     source $HOME/.local/local
 else
-    echo "no local loaded!"
+    Echo "[$me] no local loaded!"
 fi
 
 # dev-var
