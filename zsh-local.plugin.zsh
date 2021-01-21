@@ -4,7 +4,16 @@
 # locale {{{2
 # fix issue:
 #    "perl: warning: Please check that your locale settings:"
+# Howto profile zsh:
+#    patch ~/.oh-my-zsh/oh-my-zsh.sh:
+#		#Load all of the plugins that were defined in ~/.zshrc
+#		for plugin ($plugins); do
+#		  if [ ! -z ${zsh_timestamp+x} ]; then SECONDS=0; fi
+#		      ....
+#		  if [ ! -z ${zsh_timestamp+x} ]; then echo $SECONDS":" $plugin; fi
+#		done
 #
+
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
@@ -132,6 +141,19 @@ function IsDir()
     fi
 }
 
+
+# function HasVar {{{3
+# Usage: if HasVar $var; then echo "has var"; else echo "nopes"; fi
+function HasVar()
+{
+    if [ -z ${1+x} ]; then
+        # 1 = false
+        return 1
+    else
+        # 0 = true
+        return 0
+    fi
+}
 
 # Comtomize config {{{1
 # local encode info
@@ -561,25 +583,32 @@ alias tail='_mytail'
 
 
 # function prepare ftp {{{2
-if $conf_fort ; then
-    ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
-    #echo "### @Note the ftpsvr is ${ftpAddr} ###"
+function _my_pre_ftp()
+{
+    if ! HasVar $LFTP_CMD; then
+        if $conf_fort ; then
+            ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
+            #echo "### @Note the ftpsvr is ${ftpAddr} ###"
 
-    if $conf_use_ftps ; then
-        # sftpserver
-        export LFTP_CMD="lftp sftp://hyu:@${ftpAddr} -e "
-        export LFTP_DIR=$USER
-    else
-        # ftpserver
-        export LFTP_CMD="lftp -u test,test ${ftpAddr} -e "
-        export LFTP_DIR=upload/$USER
+            if $conf_use_ftps ; then
+                # sftpserver
+                export LFTP_CMD="lftp sftp://hyu:@${ftpAddr} -e "
+                export LFTP_DIR=$USER
+            else
+                # ftpserver
+                export LFTP_CMD="lftp -u test,test ${ftpAddr} -e "
+                export LFTP_DIR=upload/$USER
+            fi
+        fi
     fi
-fi
+};
+
 
 
 # function _myftpls {{{2
 function _myftpls()
 {
+    _my_pre_ftp
     eval "$LFTP_CMD 'cd $LFTP_DIR; ls; quit;'"
 };
 alias ftpls='_myftpls'
@@ -588,16 +617,17 @@ alias ftpls='_myftpls'
 # function _myftpget {{{2
 function _myftpget()
 {
-  if [ -z ${1} ]; then
-    dname=${PWD##*/}
-  else
-    dname=${1}
-  fi
+    if [ -z ${1} ]; then
+        dname=${PWD##*/}
+    else
+        dname=${1}
+    fi
 
-  for var in "$@"
-  do
-    eval "$LFTP_CMD 'cd $LFTP_DIR; get $var; quit;'"
-  done
+    _my_pre_ftp
+    for var in "$@"
+    do
+        eval "$LFTP_CMD 'cd $LFTP_DIR; get $var; quit;'"
+    done
 };
 alias ftpget='_myftpget'
 
@@ -610,6 +640,7 @@ function _myftpmirror()
   else
     dname=${1}
     echo "  Mirror '$dname'!"
+    _my_pre_ftp
     eval "$LFTP_CMD 'cd $LFTP_DIR; mirror $dname; quit;'"
   fi
 };
@@ -619,16 +650,17 @@ alias ftpmirror='_myftpmirror'
 # function _myftpput {{{2
 function _myftpput()
 {
-  if [ -z ${1} ]; then
-    dname=${PWD##*/}
-  else
-    dname=${1}
-  fi
+    if [ -z ${1} ]; then
+        dname=${PWD##*/}
+    else
+        dname=${1}
+    fi
 
-  for var in "$@"
-  do
-    eval "$LFTP_CMD 'cd $LFTP_DIR; put $var; quit;'"
-  done
+    _my_pre_ftp
+    for var in "$@"
+    do
+        eval "$LFTP_CMD 'cd $LFTP_DIR; put $var; quit;'"
+    done
 };
 alias ftpput='_myftpput'
 
@@ -636,6 +668,7 @@ alias ftpput='_myftpput'
 # function _myftprm {{{2
 function _myftprm()
 {
+    _my_pre_ftp
     if [ -z ${1} ]; then
         dname=${PWD##*/}
         echo "  Removing '$dname'!"
@@ -656,24 +689,25 @@ alias ftprm='_myftprm'
 # function _myftp {{{2
 function _myftp()
 {
-  if [ -z ${1} ]; then
-    dname=${PWD##*/}
-  else
-    dname=${1}
-  fi
-
-  if [ -f image.out ]; then
-    file=image.out
-    eval "$LFTP_CMD 'cd $LFTP_DIR; ls; mkdir $dname; cd $dname; put $file; put patch.diff; put patch.eco.diff; put fgtcoveragebuild.tar.xz; put fgtcoveragebuild.tar.bz2; put checklist.txt; put fortios.qcow2; put fortiproxy.qcow2; put image.out.vmware.zip; put image.out.ovf.zip; put image.out.hyperv.zip; put image.out.gcp.tar.gz;put image.out.kvm.zip; put image.out.gcp.tar.gz;lpwd; pwd; ls; quit;'"
-  else
-    if [ -z "$1" ]; then
-      echo "File $1 not found!"
-      return 1
+    if [ -z ${1} ]; then
+        dname=${PWD##*/}
     else
-      file=$1
-      eval "$LFTP_CMD 'cd $LFTP_DIR; mkdir $dname; cd $dname; put $file; ls; quit;'"
+        dname=${1}
     fi
-  fi
+
+    _my_pre_ftp
+    if [ -f image.out ]; then
+        file=image.out
+        eval "$LFTP_CMD 'cd $LFTP_DIR; ls; mkdir $dname; cd $dname; put $file; put patch.diff; put patch.eco.diff; put fgtcoveragebuild.tar.xz; put fgtcoveragebuild.tar.bz2; put checklist.txt; put fortios.qcow2; put fortiproxy.qcow2; put image.out.vmware.zip; put image.out.ovf.zip; put image.out.hyperv.zip; put image.out.gcp.tar.gz;put image.out.kvm.zip; put image.out.gcp.tar.gz;lpwd; pwd; ls; quit;'"
+    else
+        if [ -z "$1" ]; then
+            echo "File $1 not found!"
+            return 1
+        else
+            file=$1
+            eval "$LFTP_CMD 'cd $LFTP_DIR; mkdir $dname; cd $dname; put $file; ls; quit;'"
+        fi
+    fi
 };
 alias ftpme='_myftp'
 
