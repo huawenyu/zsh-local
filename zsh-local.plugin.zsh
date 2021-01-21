@@ -13,6 +13,7 @@
 #		  if [ ! -z ${zsh_timestamp+x} ]; then echo $SECONDS":" $plugin; fi
 #		done
 #
+me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
@@ -101,11 +102,30 @@ function Run()
     fi
 }
 
+# function HasCmd {{{3
+# Usage: if HasCmd boxes; then echo "has boxes"; else echo "nopes"; fi
+function HasCmd()
+{
+    if [ ! -z ${1} ]; then
+        if ! command -v $1 &> /dev/null
+        then
+            # 1 = false
+            return 1
+        else
+            # 0 = true
+            return 0
+        fi
+    else
+        # 1 = false
+        return 1
+    fi
+}
 
 # function Echo {{{3
+# if [ -x boxes ]; then echo "exist"; else echo "not exist"; fi
 function Echo()
 {
-    if [ -x /usr/bin/boxes ]; then
+    if HasCmd boxes; then
         echo "$*" | boxes
     else
         eval "$@"
@@ -280,7 +300,7 @@ function _tmux_layout_man()
 USAGE=$(cat <<-END
 	  $0  list
 	  $0  new|select [layout, 'default']
-	  $0  clone nameLayout nameWindow bugNum
+	  $0  clone <nameLayout> <nameWindow> <bugNum>
 END
 )
 
@@ -380,6 +400,13 @@ END
         #   echo ${varname}
         #   echo ${!varname}
 
+        if HasCmd heytmux; then
+            : #
+        else
+            Echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
+            return 1
+        fi
+
         # <nameLayout>='layoutString'
         source /tmp/tmux.layout
 
@@ -396,13 +423,13 @@ END
                     Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${HEYTMUX_PATH}/${layout}.yml"
                     Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
                 else
-                    echo "Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${HEYTMUX_PATH}'"
+                    echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${HEYTMUX_PATH}'"
                     return 1
                 fi
             fi
         } || { # catch
             # save log for exception 
-            echo "Please gen the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
+            echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
             echo "    $0 gen ${layout}"
             return 1
         }
