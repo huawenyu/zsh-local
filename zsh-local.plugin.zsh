@@ -178,7 +178,7 @@ if [ -f "$HOME/.local/local" ]; then
     #echo "load local succ!"
     source $HOME/.local/local
 else
-    Echo "[$me] no local loaded!"
+    Echo "[$me] no local-env loaded from '$HOME/.local/local', but it's harmless!"
 fi
 
 # dev-var
