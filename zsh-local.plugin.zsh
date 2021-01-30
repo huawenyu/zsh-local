@@ -93,11 +93,14 @@ function Run()
     if [ -v "dryrun" ]; then
         echo "[dryrun]:	$*"
         return 0
+    elif [ -v "verbose" ]; then
+        echo "Executing $*"
+        eval "$@"
     else
-        #echo "Executing $*"
         eval "$@"
     fi
 }
+
 
 # function HasCmd {{{3
 # Usage: if HasCmd boxes; then echo "has boxes"; else echo "nopes"; fi
@@ -122,13 +125,25 @@ function HasCmd()
 # if [ -x boxes ]; then echo "exist"; else echo "not exist"; fi
 function Echo()
 {
-    if HasCmd boxes; then
+    if [ $usage -gt 0 ]; then
+        return 0
+    elif HasCmd boxes; then
         echo "$*" | boxes
     else
         echo "$*"
     fi
+    usage=1
 }
 
+function Echo2()
+{
+    if [ $usage -gt 0 ]; then
+        return 0
+    else
+        echo "$*"
+    fi
+    usage=1
+}
 
 # function IsNum {{{3
 # https://stackoverflow.com/questions/5431909/returning-a-boolean-from-a-bash-function
@@ -185,7 +200,9 @@ fi
 conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
-export HEYTMUX_PATH="$HOME/script/heytmux"
+export MYPATH_HEYTMUX="$HOME/script/heytmux"
+export MYPATH_WORKREF="$HOME/workref"
+export MYPATH_WORK="$HOME/work"
 
 
 # PS1 {{{2
@@ -201,14 +218,14 @@ alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
 alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
-alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -I{} tmux kill-session -t {}"
+alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"
 #alias ls='ls -lart'
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
 #    ln -s /drives/c/Windows/System32/drivers/ ./root
-alias sync-push="rsync -avrz --progress ~/share/ hyu@work:/home/hyu/workref/share/"
-alias sync-pull="rsync -avrz --progress hyu@work:/home/hyu/workref/share/ ~/share/"
+alias sync-push="rsync -avrz --progress ~/share/ hyu@work:${MYPATH_WORKREF}/share/"
+alias sync-pull="rsync -avrz --progress hyu@work:${MYPATH_WORKREF}/share/ ~/share/"
 
 
 # pair-programer: share terminal screen {{{2
@@ -297,10 +314,11 @@ function _tmux_layout_man()
 USAGE=$(cat <<-END
 	  $0  list
 	  $0  new|select [layout, 'default']
-	  $0  clone <nameLayout> <nameWindow> <bugNum>
+	  $0  clone [nameLayout] [nameWindow] [bugNum]
 END
 )
 
+    usage=0
     # @args:action
     if [ -z ${1} ]; then
         action='list'
@@ -322,30 +340,31 @@ END
             shift
         fi
     elif [ ${action} == "clone" ]; then
+        # @args: layout
         if [ -z ${1} ]; then
             Echo "${USAGE}"
-            echo "\t args: $0 cp ${RED}nameLayout${NC} nameWindow bugNum"
-            return 1
+            Echo2 "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+            layout='default'
         else
             layout=$1
             shift
         fi
 
-        # @args:nameWindow
+        # @args: nameWindow
         if [ -z ${1} ]; then
             Echo "${USAGE}"
-            echo "\t args: $0 cp nameLayout ${RED}nameWindow${NC} bugNum"
-            return 1
+            Echo2 "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
+            nameWindow=$(tmux display-message -p '#W')
         else
             nameWindow=$1
             shift
         fi
 
-        # @args:bugNum
+        # @args: bugNum
         if [ -z ${1} ]; then
             Echo "${USAGE}"
-            echo "\t args: $0 cp nameLayout nameWindow ${RED}bugNum${NC}"
-            return 1
+            Echo2 "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
+            bugNum=0
         else
             bugNum=$1
             shift
@@ -359,6 +378,7 @@ END
     # do-task
     if [ ${action} == "new" ]; then
         Run tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
+        Run tlayout list
         return 0
     elif [ ${action} == "select" ]; then
         # <nameLayout>='layoutString'
@@ -416,18 +436,18 @@ END
             if [ ! -z ${layoutString+x} ]; then
                 echo "Tmux-layout '${layout}': ${layoutString}"
 
-                if [ -f "${HEYTMUX_PATH}/${layout}.yml" ]; then
-                    Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${HEYTMUX_PATH}/${layout}.yml"
+                if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
+                    Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
                     Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
                 else
-                    echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${HEYTMUX_PATH}'"
+                    echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${MYPATH_HEYTMUX}'"
                     return 1
                 fi
             fi
         } || { # catch
             # save log for exception 
             echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
-            echo "    $0 gen ${layout}"
+            echo "$0 new ${layout}"
             return 1
         }
 
@@ -454,6 +474,19 @@ END
     return 0
 };
 alias tlayout='_tmux_layout_man'
+
+
+
+# Show current task's document {{{2
+function _task_document()
+{
+    nameWindow=$(tmux display-message -p '#W')
+    tree -if --noreport ${MYPATH_WORKREF}/doc/*$nameWindow \
+        | fzf --multi --preview 'head -qn 30 {+1} 2> /dev/null' --preview-window +{2}-/2 \
+        | xargs -r -o $EDITOR
+
+};
+alias tdoc='_task_document'
 
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
