@@ -71,15 +71,29 @@ function _Usage()
 #     ${FUNCNAME[0]} not show current function name, but $0 works
 USAGE=$(cat <<-END
 	  dryrun: dryrun=1 Run ls -lart
-	      $0 add|del user1 ses_name
 	      tshare add user1
 	      tshare del user1
-	  tlayout: new | list | select | clone
 	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
+	  tlayout: new | list | select | clone
 END
 )
 
     echo "${USAGE}"
+
+    fcmd="/tmp/my_tmp_cmd"
+    rm -f $fcmd
+    if test -n "$ZSH_VERSION"; then
+        # ${(k)aliases} ${(k)functions}
+        print -rl -- ${(k)aliases} | grep -v zsh | awk 'length($0)>3' | fzf | xargs -r -I{} echo '{}' > $fcmd
+    elif test -n "$BASH_VERSION"; then
+        # ${(k)aliases} ${(k)functions}
+        declare -F | grep -v zsh | awk 'length($0)>3' | fzf | xargs -r -I{} echo '{}' > $fcmd
+    fi
+
+    if [ -f "$fcmd" ]; then
+        source $fcmd
+        rm -f $fcmd
+    fi
     return 0
 }
 compdef _usage help
@@ -203,6 +217,7 @@ conf_use_ftps=false
 export MYPATH_HEYTMUX="$HOME/script/heytmux"
 export MYPATH_WORKREF="$HOME/workref"
 export MYPATH_WORK="$HOME/work"
+export MYPATH_WIKI="$HOME/doc"
 
 
 # PS1 {{{2
@@ -476,17 +491,50 @@ END
 alias tlayout='_tmux_layout_man'
 
 
-
 # Show current task's document {{{2
 function _task_document()
 {
     nameWindow=$(tmux display-message -p '#W')
     tree -if --noreport ${MYPATH_WORKREF}/doc/*$nameWindow \
-        | fzf --multi --preview 'head -qn 30 {+1} 2> /dev/null' --preview-window +{2}-/2 \
+        | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
         | xargs -r -o $EDITOR
-
 };
 alias tdoc='_task_document'
+
+
+function _task_preview()
+{
+    unset fname
+    unset fline
+    IN=$1
+    mails=$(echo $IN | tr ":" "\n")
+
+    for addr in $mails
+    do
+        if [ ! -v fname ]; then
+            fname=$addr
+        elif [ ! -v fline ]; then
+            fline=$addr
+        fi
+    done
+
+    # echo ${fname}
+    # echo ${fline}
+    # echo "done"
+
+    sed -n "$fline,+20p" $fname
+};
+alias tpreview='_task_preview'
+
+
+# Show current task's document {{{2
+function _task_wiki()
+{
+    rg -n " " $MYPATH_WIKI \
+        | fzf --keep-right --preview "doc-preview.sh {1}" --preview-window +{2}-/2 \
+        | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+};
+alias twiki='_task_wiki'
 
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
