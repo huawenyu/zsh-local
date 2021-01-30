@@ -517,8 +517,37 @@ alias tpreview='_task_preview'
 # Show current task's document {{{2
 function _task_wiki()
 {
-    rg -n " " $MYPATH_WIKI \
-        | fzf --keep-right --preview "doc-preview.sh {1}" --preview-window +{2}-/2 \
+USAGE=$(cat <<-END
+	  $0 [subdir] [grep-string]
+END
+)
+    # @args:subdir
+    if [ -z ${1} ]; then
+        grepdir=$MYPATH_WIKI
+        greptext="  "
+        Echo "${USAGE}"
+    else
+        subdir=$1
+        if [ -d "$MYPATH_WIKI/${subdir}" ]; then
+            grepdir="$MYPATH_WIKI/${subdir}"
+        else
+            greptext=$1
+        fi
+        shift
+    fi
+
+    if [ ! -v "greptext" ]; then
+        # @args:greptext
+        if [ -z ${1} ]; then
+            greptext="  "
+        else
+            greptext=$1
+            shift
+        fi
+    fi
+
+    rg -nL "$greptext" $grepdir \
+        | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
         | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
 };
 alias twiki='_task_wiki'
