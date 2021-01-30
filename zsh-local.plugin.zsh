@@ -139,24 +139,11 @@ function HasCmd()
 # if [ -x boxes ]; then echo "exist"; else echo "not exist"; fi
 function Echo()
 {
-    if [ $usage -gt 0 ]; then
-        return 0
-    elif HasCmd boxes; then
+    if HasCmd boxes; then
         echo "$*" | boxes
     else
         echo "$*"
     fi
-    usage=1
-}
-
-function Echo2()
-{
-    if [ $usage -gt 0 ]; then
-        return 0
-    else
-        echo "$*"
-    fi
-    usage=1
 }
 
 # function IsNum {{{3
@@ -357,8 +344,8 @@ END
     elif [ ${action} == "clone" ]; then
         # @args: layout
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
-            Echo2 "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+            # Echo "${USAGE}"
+            # Echo2 "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
             layout='default'
         else
             layout=$1
@@ -367,8 +354,8 @@ END
 
         # @args: nameWindow
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
-            Echo2 "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
+            # Echo "${USAGE}"
+            # Echo2 "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
             nameWindow=$(tmux display-message -p '#W')
         else
             nameWindow=$1
@@ -377,15 +364,15 @@ END
 
         # @args: bugNum
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
-            Echo2 "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
+            # Echo "${USAGE}"
+            # Echo2 "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
             bugNum=0
         else
             bugNum=$1
             shift
         fi
     else
-        Echo "${USAGE}"
+        # Echo "${USAGE}"
         return 1
     fi
 
