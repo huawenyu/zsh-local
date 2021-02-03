@@ -202,7 +202,7 @@ conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
 export MYPATH_HEYTMUX="$HOME/script/heytmux"
-export MYPATH_WORKREF="$HOME/workref"
+export MYPATH_WORKREF="~/workref"
 export MYPATH_WORK="$HOME/work"
 export MYPATH_WIKI="$HOME/doc"
 
@@ -481,10 +481,23 @@ alias tlayout='_tmux_layout_man'
 # Show current task's document {{{2
 function _task_document()
 {
-    nameWindow=$(tmux display-message -p '#W')
-    tree -if --noreport ${MYPATH_WORKREF}/doc/*$nameWindow \
-        | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
-        | xargs -r -o $EDITOR
+USAGE=$(cat <<-END
+	  $0  <null>      +--- list current project doc
+	  $0  anystring   +--- list all doc
+END
+)
+    # @args:subdir or all
+    if [ -z ${1} ]; then
+        nameWindow=$(tmux display-message -p '#W')
+        tree -if --noreport ${MYPATH_WORKREF}/doc/*$nameWindow \
+            | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
+            | xargs -r -o $EDITOR
+    else
+        tree -if --noreport ${MYPATH_WORKREF}/doc \
+            | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
+            | xargs -r -o $EDITOR
+    fi
+    echo $USAGE
 };
 alias tdoc='_task_document'
 
@@ -518,20 +531,30 @@ alias tpreview='_task_preview'
 function _task_wiki()
 {
 USAGE=$(cat <<-END
-	  $0 [subdir] [grep-string]
+	  $0 file  [text]  +--- list all files
+	  $0 [subdir] [text]
 END
 )
+
+    unset greptext
+    argExtra=''
+    grepdir=$MYPATH_WIKI
+
     # @args:subdir
     if [ -z ${1} ]; then
-        grepdir=$MYPATH_WIKI
-        greptext="  "
+        greptext=' '
         Echo "${USAGE}"
     else
         subdir=$1
-        if [ -d "$MYPATH_WIKI/${subdir}" ]; then
-            grepdir="$MYPATH_WIKI/${subdir}"
+        if [ ${subdir} == "file" ]; then
+            # list all file name only
+            argExtra='l'
         else
-            greptext=$1
+            if [ -d "$MYPATH_WIKI/${subdir}" ]; then
+                grepdir="$MYPATH_WIKI/${subdir}"
+            else
+                greptext=$1
+            fi
         fi
         shift
     fi
@@ -539,16 +562,34 @@ END
     if [ ! -v "greptext" ]; then
         # @args:greptext
         if [ -z ${1} ]; then
-            greptext="  "
+            greptext=' '
         else
             greptext=$1
             shift
         fi
     fi
 
-    rg -nL "$greptext" $grepdir \
-        | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
-        | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+
+    # echo "length=${#greptext}"
+    # echo "rg -n${argExtra}L " "'"${greptext}"'" "$grepdir"
+    # Run rg -n${argExtra}L "'"${greptext}"'" $grepdir
+    # rg -nlL ' ' /home/hyu/doc | wc -l
+    # rg -n${argExtra}L "'"${greptext}"'" $grepdir > /tmp/tmp_filelist
+    #
+
+    if [ ! -v "dryrun" ]; then
+        if [ ${greptext} == ' ' ]; then
+            rg -n${argExtra}L ' ' $grepdir \
+                | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
+                | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+        else
+            rg -n${argExtra}L ${greptext} $grepdir \
+                | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
+                | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+        fi
+    else
+        Run rg -n${argExtra}L "'"${greptext}"'" $grepdir
+    fi
 };
 alias twiki='_task_wiki'
 
@@ -1008,5 +1049,19 @@ export FZF_DEFAULT_OPTS='
 
 # manpager cannot use pipe to link the commands
 #export MANPAGER="col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -"
-export MANPAGER="/bin/sh -c \"col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+#export MANPAGER="/bin/sh -c \"col -b | /usr/bin/vim.gtk3 -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+#
+# https://www.onooks.com/linux-mint-man-pages-require-sudo-when-pager-is-neovim/
+## The issue come from when change the man to nvim:
+# $ man ls
+#     fuse: mount failed: Permission denied
+#     Cannot mount AppImage, please check your FUSE setup.
+#export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
+#export MANPAGER="nvim -c 'set ft=man' -"
+#export MANPAGER="nvim +Man!"
+# Install:
+#   sudo apt-get install pandoc
+#   git clone https://github.com/lucc/nvimpager.git
+#   cd nvimpager && make PREFIX=$HOME/.local install
+export PAGER=nvimpager
 
