@@ -15,6 +15,16 @@
 #
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
+
+# Don't do this, will make tmux C-x=clear-screen not work.
+# - can't resolve the urxvt/window-terminal C-L make the screen blinking,
+# - alacritty/gnome-terminal/xfce-terminal have no such issue
+## Check keybinding:  bindkey
+## https://unix.stackexchange.com/questions/285208/how-to-remove-a-zsh-keybinding-if-i-dont-know-what-it-does
+## default Ctrl-L clear-screen, which cause the terminal blinking when tmux bindto select-left-pane
+## bindkey -r "^L"
+
+
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
@@ -313,10 +323,16 @@ function _tmux_layout_man()
 {
 #     ${FUNCNAME[0]} not show current function name, but $0 works
 #	  $0 gen|cp|top|side,default=cp 0123456 "summary block traffic under proxy"
+cmd="tlayout"
 USAGE=$(cat <<-END
-	  $0  list
-	  $0  new|select [layout, 'default']
-	  $0  clone [nameLayout] [nameWindow] [bugNum]
+	  $cmd alias "$0"
+	  Sample:
+	    $cmd [default=list]
+	    $cmd list	+=== list current layout, we can create by 'tlayout new'
+	    $cmd clone	+=== apply the selected layout, [default]
+	    $cmd del	+=== delete current tmux-window/project-directory
+	    $cmd new|select [layout, 'default']
+	    $cmd clone [nameLayout] [nameWindow] [bugNum]
 END
 )
 
@@ -325,6 +341,7 @@ END
     if [ -z ${1} ]; then
         action='list'
         Echo "${USAGE}"
+        USAGE=''
     else
         action=$1
         shift
@@ -333,6 +350,11 @@ END
     # @args:layout
     if [ ${action} == "list" ]; then
         Run cat /tmp/tmux.layout| cut -d "=" -f 1
+        return 0
+    elif [ ${action} == "del" ]; then
+        nameWindow=$(tmux display-message -p '#W')
+        Run rm -fr ${MYPATH_WORK}/${nameWindow}
+        Run tmux kill-window -t "${nameWindow}"
         return 0
     elif [ ${action} == "new" ] || [ ${action} == "select" ]; then
         if [ -z ${1} ]; then
@@ -344,8 +366,9 @@ END
     elif [ ${action} == "clone" ]; then
         # @args: layout
         if [ -z ${1} ]; then
-            # Echo "${USAGE}"
-            # Echo2 "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+            Echo "${USAGE}"
+            USAGE=''
+            Echo "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
             layout='default'
         else
             layout=$1
@@ -354,8 +377,9 @@ END
 
         # @args: nameWindow
         if [ -z ${1} ]; then
-            # Echo "${USAGE}"
-            # Echo2 "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
+            Echo "${USAGE}"
+            USAGE=''
+            Echo "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
             nameWindow=$(tmux display-message -p '#W')
         else
             nameWindow=$1
@@ -364,8 +388,9 @@ END
 
         # @args: bugNum
         if [ -z ${1} ]; then
-            # Echo "${USAGE}"
-            # Echo2 "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
+            Echo "${USAGE}"
+            USAGE=''
+            Echo "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
             bugNum=0
         else
             bugNum=$1
@@ -393,35 +418,11 @@ END
             return 0
         fi
     elif [ ${action} == "clone" ]; then
-        #   #!/bin/bash
-        #
-        #   source /tmp/tmux.layout
-        #
-        #   nameLayout='mylayout1'
-        #   echo ${nameLayout}
-        #   echo ${!nameLayout2}
-        #
-        #   if [ ! -z "${!nameLayout}" ]; then
-        #   	echo "\$var is NOT empty"
-        #   fi
-        #
-        #   if [ ! -z "${!nameLayout2}" ]; then
-        #   	echo "\$var2 is NOT empty"
-        #   fi
-        #
-        #   exit 1
-        #
-        #   suffix=bzz
-        #   declare prefix_$suffix=mystr
-        #
-        #   # Then
-        #   varname=prefix_$suffix
-        #   echo ${varname}
-        #   echo ${!varname}
-
         if HasCmd heytmux; then
             : #
         else
+            Echo "${USAGE}"
+            USAGE=''
             Echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
             return 1
         fi
@@ -439,15 +440,20 @@ END
                 echo "Tmux-layout '${layout}': ${layoutString}"
 
                 if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
+                    #indexWindow=$(tmux display-message -p '#I')
                     Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
                     Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
                 else
+                    Echo "${USAGE}"
+                    USAGE=''
                     echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${MYPATH_HEYTMUX}'"
                     return 1
                 fi
             fi
         } || { # catch
-            # save log for exception 
+            # save log for exception
+            Echo "${USAGE}"
+            USAGE=''
             echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
             echo "$0 new ${layout}"
             return 1
@@ -471,6 +477,8 @@ END
         #Run tmux send-keys 'echo music' 'Enter'
         #Run tmux select-pane -t 2
     else
+        Echo "${USAGE}"
+        USAGE=''
         echo "Support layouts: gen,cp; top,right"
     fi
     return 0
@@ -624,39 +632,74 @@ unsetopt nomatch
 # @param model buildnum product
 function _mysmbget()
 {
+USAGE=$(cat <<-END
+	  $0 buildnum (fos|fpx|ls) model
+	  Sample:
+	    smbget 1561 ls
+
+	    smbget 1561 fos 600E
+	    smbget 0288 fpx 400E
+
+	    smbget 1561 fos VM64_KVM
+	    smbget 0288 fpx VMWARE
+	  $0 [subdir] [text]
+END
+)
+    unset buildnum
+    unset product
+    unset model
+
+    # @args:buildnum
     if [ -z ${1} ]; then
-        echo "script model buildnum [product=fos|fpx|<ls>]: no model. 'script 600E 1561'"
+        Echo $USAGE
+        USAGE=''
+        echo "no buildnum."
         return 1
     else
+        buildnum=${1}
+        shift
+    fi
+
+    # @args:product
+    if [ -z ${1} ]; then
+        Echo $USAGE
+        USAGE=''
+        echo "no product."
+        return 1
+    else
+        product=${1}
+        shift
+    fi
+
+    # @args:model
+    if [ -z ${1} ]; then
+        Echo $USAGE
+        USAGE=''
+        product='ls'
+        echo "no model, change product to 'ls'"
+    else
         model=${1}
+        shift
     fi
 
-    if [ -z ${2} ]; then
-        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: no buildnum."
-        echo "Sample: smbget 400E 0288 fpx"
-        echo "        smbget VMWARE 0288 fpx"
-        return 0
-    else
-        buildnum=${2}
-    fi
 
-    if [ -z ${3} ]; then
-        echo "product: 'fos'"
-        product="fos"
-    else
-        product=${3}
-    fi
-
-    if [ ${product} == "fos" ]; then
+    if [ ${product} = "fos" ]; then
         echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
-        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
-    elif [ ${product} == "fpx" ]; then
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+            cd FortiOS/v6.00/images/build${buildnum}; \
+            get FGT_${model}-v6-build${buildnum}-FORTINET.deb; \
+            get FGT_${model}-v6-build${buildnum}-FORTINET.out; \
+            get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
+            '"
+    elif [ ${product} = "fpx" ]; then
         echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-    elif [ ${product} == "ls" ]; then
+    elif [ ${product} = "ls" ]; then
+        #eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.deb;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
     else
-        echo "Args likes, model buildnum [product=fos|fpx|<ls>]: script 600E 1561 ls"
+        Echo $USAGE
+        USAGE=''
         return 1
     fi
 };
@@ -1058,10 +1101,15 @@ export FZF_DEFAULT_OPTS='
 #     Cannot mount AppImage, please check your FUSE setup.
 #export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
 #export MANPAGER="nvim -c 'set ft=man' -"
-#export MANPAGER="nvim +Man!"
-# Install:
-#   sudo apt-get install pandoc
-#   git clone https://github.com/lucc/nvimpager.git
-#   cd nvimpager && make PREFIX=$HOME/.local install
-export PAGER=nvimpager
+export MANPAGER="nvim +Man!"
+export MANWIDTH=999
+
+# Don't use nvimpager:
+# - can't support tmux-vim-jump
+# - can't support git log color
+## Install:
+##   sudo apt-get install pandoc
+##   git clone https://github.com/lucc/nvimpager.git
+##   cd nvimpager && make PREFIX=$HOME/.local install
+##export MANPAGER=nvimpager
 
