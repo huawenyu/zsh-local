@@ -212,7 +212,7 @@ conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
 export MYPATH_HEYTMUX="$HOME/script/heytmux"
-export MYPATH_WORKREF="~/workref"
+export MYPATH_WORKREF="$HOME/workref"
 export MYPATH_WORK="$HOME/work"
 export MYPATH_WIKI="$HOME/doc"
 
@@ -494,10 +494,11 @@ USAGE=$(cat <<-END
 	  $0  anystring   +--- list all doc
 END
 )
-    # @args:subdir or all
-    if [ -z ${1} ]; then
-        nameWindow=$(tmux display-message -p '#W')
-        tree -if --noreport ${MYPATH_WORKREF}/doc/*$nameWindow \
+    nameWindow=$(tmux display-message -p '#W')
+    projDir=$(find ${MYPATH_WORKREF}/doc -type d -name "*${nameWindow}")
+
+    if [ ! -z ${projDir} ]; then
+        tree -if --noreport $projDir \
             | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
             | xargs -r -o $EDITOR
     else
