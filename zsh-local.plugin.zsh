@@ -211,10 +211,19 @@ fi
 conf_fort=true
 # Also should set ftpsvr in /etc/hosts
 conf_use_ftps=false
-export MYPATH_HEYTMUX="$HOME/script/heytmux"
-export MYPATH_WORKREF="$HOME/workref"
-export MYPATH_WORK="$HOME/work"
-export MYPATH_WIKI="$HOME/doc"
+if [ ! -v MYPATH_HEYTMUX ]; then
+    export MYPATH_HEYTMUX="$HOME/script/heytmux"
+fi
+
+if [ ! -v MYPATH_WORKREF ]; then
+    export MYPATH_WORKREF="$HOME/workref"
+fi
+if [ ! -v MYPATH_WORK ]; then
+    export MYPATH_WORK="$HOME/work"
+fi
+if [ ! -v MYPATH_WIKI ]; then
+    export MYPATH_WIKI="$HOME/doc"
+fi
 
 
 # PS1 {{{2
