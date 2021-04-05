@@ -84,7 +84,7 @@ USAGE=$(cat <<-END
 	      tshare add user1
 	      tshare del user1
 	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
-	  tlayout: new | list | select | clone
+	  tlayout: new | list | set | clone
 END
 )
 
@@ -337,11 +337,11 @@ USAGE=$(cat <<-END
 	  $cmd alias "$0"
 	  Sample:
 	    $cmd [default=list]
-	    $cmd list	+=== list current layout, we can create by 'tlayout new'
-	    $cmd clone	+=== apply the selected layout, [default]
+	    $cmd list	+=== list current layout, we can create by 'tlayout save'
 	    $cmd del	+=== delete current tmux-window/project-directory
-	    $cmd new|select [layout, 'default']
-	    $cmd clone [nameLayout] [nameWindow] [bugNum]
+	    $cmd save|set [layout, 'default']
+	    $cmd create	+=== apply the selected layout, [default]
+	    $cmd create [nameLayout] [nameWindow] [bugNum]
 END
 )
 
@@ -365,19 +365,19 @@ END
         Run rm -fr ${MYPATH_WORK}/${nameWindow}
         Run tmux kill-window -t "${nameWindow}"
         return 0
-    elif [ ${action} == "new" ] || [ ${action} == "select" ]; then
+    elif [ ${action} == "save" ] || [ ${action} == "set" ]; then
         if [ -z ${1} ]; then
             layout='default'
         else
             layout=$1
             shift
         fi
-    elif [ ${action} == "clone" ]; then
+    elif [ ${action} == "create" ]; then
         # @args: layout
         if [ -z ${1} ]; then
             Echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 clone [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+            Echo "\t args: $0 create [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
             layout='default'
         else
             layout=$1
@@ -388,7 +388,7 @@ END
         if [ -z ${1} ]; then
             Echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 clone $layout ${RED}nameWindow${NC} bugNum"
+            Echo "\t args: $0 create $layout ${RED}nameWindow${NC} bugNum"
             nameWindow=$(tmux display-message -p '#W')
         else
             nameWindow=$1
@@ -399,7 +399,7 @@ END
         if [ -z ${1} ]; then
             Echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 clone $layout $nameWindow [${RED}bugNum${NC}]"
+            Echo "\t args: $0 create $layout $nameWindow [${RED}bugNum${NC}]"
             bugNum=0
         else
             bugNum=$1
@@ -412,11 +412,11 @@ END
 
 
     # do-task
-    if [ ${action} == "new" ]; then
+    if [ ${action} == "save" ]; then
         Run tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
         Run tlayout list
         return 0
-    elif [ ${action} == "select" ]; then
+    elif [ ${action} == "set" ]; then
         # <nameLayout>='layoutString'
         source /tmp/tmux.layout
 
@@ -426,7 +426,7 @@ END
             Run tmux select-layout "'${layoutString}'"
             return 0
         fi
-    elif [ ${action} == "clone" ]; then
+    elif [ ${action} == "create" ]; then
         if HasCmd heytmux; then
             : #
         else
@@ -464,7 +464,7 @@ END
             Echo "${USAGE}"
             USAGE=''
             echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
-            echo "$0 new ${layout}"
+            echo "$0 save ${layout}"
             return 1
         }
 
@@ -643,15 +643,15 @@ unsetopt nomatch
 function _mysmbget()
 {
 USAGE=$(cat <<-END
-	  $0 buildnum (fos|fpx|ls) model
+	  $0 buildnum (fos6|fos7|fpx|ls) model
 	  Sample:
 	    smbget 1561 ls
 
-	    smbget 1561 fos 600E
-	    smbget 0288 fpx 400E
+	    smbget 1561 fos6 FGT_600E
+	    smbget 0288 fpx  FPX_400E
 
-	    smbget 1561 fos VM64_KVM
-	    smbget 0288 fpx VMWARE
+	    smbget 1561 fos6 FGT_VM64_KVM
+	    smbget 0288 fpx  FPX_VMWARE
 	  $0 [subdir] [text]
 END
 )
@@ -693,17 +693,27 @@ END
     fi
 
 
-    if [ ${product} = "fos" ]; then
-        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
+    #get ${model}-v6-build${buildnum}-FORTINET.deb;
+    #get ${model}-v6-build${buildnum}-FORTINET.out;
+    #get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz;
+    #get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;
+    if [ ${product} = "fos6" ]; then
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
             cd FortiOS/v6.00/images/build${buildnum}; \
-            get FGT_${model}-v6-build${buildnum}-FORTINET.deb; \
-            get FGT_${model}-v6-build${buildnum}-FORTINET.out; \
-            get FGT_${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
+            get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
+            '"
+    elif [ ${product} = "fos7" ]; then
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+            cd FortiOS/v7.00/images/build${buildnum}; \
+            get ${model}-v7-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     elif [ ${product} = "fpx" ]; then
-        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get FPX_${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
     elif [ ${product} = "ls" ]; then
         #eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.deb;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
