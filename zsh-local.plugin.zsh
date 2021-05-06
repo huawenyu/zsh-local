@@ -1074,7 +1074,7 @@ alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 # used develop {{{2
 if $conf_fort ; then
     export USESUDO=$(which sudo)
-    export FORTIPKG=/ssd/fortipkg
+    export FORTIPKG=$HOME/fortipkg
 fi
 
 #export JEMALLOC_PATH=$HOME/project/jemalloc
