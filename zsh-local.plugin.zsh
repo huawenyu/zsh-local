@@ -320,6 +320,7 @@ alias tshare='_task_share_screen'
 
 alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
 alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
+alias mwork2="mosh hyu@work2 -- sh -c 'tmux attach -t work || tmux new -s work'"
 
 
 # tmux layout manage {{{2
@@ -1051,11 +1052,16 @@ elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
   export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
 fi
 
+#if [ -d "$HOME/..fzf_browser" ]; then
+#  export PATH=${PATH}:~/.fzf_browser
+#fi
+
 ## debug neovim python plugin:
 #export NVIM_PYTHON_LOG_FILE=/tmp/log
 #export NVIM_PYTHON_LOG_LEVEL=DEBUG
 
 export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
+#export CDPATH=.:$CDPATH
 
 # task, todos {{{2
 export TASKDDATA=/var/lib/taskd
@@ -1068,7 +1074,7 @@ alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 # used develop {{{2
 if $conf_fort ; then
     export USESUDO=$(which sudo)
-    export FORTIPKG=$HOME/fortipkg
+    export FORTIPKG=/ssd/fortipkg
 fi
 
 #export JEMALLOC_PATH=$HOME/project/jemalloc
