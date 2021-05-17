@@ -451,6 +451,7 @@ END
 
                 if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
                     #indexWindow=$(tmux display-message -p '#I')
+                    mkdir -p ${MYPATH_HEYTMUX}/${nameWindow}
                     Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
                     Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
                 else
