@@ -12,6 +12,17 @@
 #		      ....
 #		  if [ ! -z ${zsh_timestamp+x} ]; then echo $SECONDS":" $plugin; fi
 #		done
+# Howto use shell-integrate fzf:
+# https://www.freecodecamp.org/news/fzf-a-command-line-fuzzy-finder-missing-demo-a7de312403ff/
+#   `**` sequence triggers fzf finder and it resembles * which is for native shell expansion.
+#   cd **<TAB>
+#   vi **<TAB>
+#   Shortkey:
+#     Ctrl-z+r    Search command history [Ctrl-R]
+#     Atl-c       List/Change dir
+#     Ctrl-t      Like the ** sequence
+#     kill -9<TAB>
+#
 #
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
@@ -510,11 +521,11 @@ END
 
     if [ ! -z ${projDir} ]; then
         tree -if --noreport $projDir \
-            | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
+            | fzf --keep-right --preview 'bat --color=always --style=numbers --line-range=:500 {} 2> /dev/null' --preview-window +{2}-/2 \
             | xargs -r -o $EDITOR
     else
         tree -if --noreport ${MYPATH_WORKREF}/doc \
-            | fzf --keep-right --preview 'head -qn 30 {1} 2> /dev/null' --preview-window +{2}-/2 \
+            | fzf --keep-right --preview 'bat --color=always --style=numbers --line-range=:500 {}  2> /dev/null' --preview-window +{2}-/2 \
             | xargs -r -o $EDITOR
     fi
     echo $USAGE
@@ -600,11 +611,11 @@ END
     if [ ! -v "dryrun" ]; then
         if [ ${greptext} == ' ' ]; then
             rg -n${argExtra}L ' ' $grepdir \
-                | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
+                | fzf --keep-right --preview "bat --color=always --style=numbers --line-range=:500 {}" --preview-window=up:40% \
                 | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
         else
             rg -n${argExtra}L ${greptext} $grepdir \
-                | fzf --keep-right --preview "doc-preview.sh {}" --preview-window=up:40% \
+                | fzf --keep-right --preview "bat --color=always --style=numbers --line-range=:500 {}" --preview-window=up:40% \
                 | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
         fi
     else
@@ -1047,6 +1058,10 @@ if [ -d "$HOME/perl5/bin" ]; then
   export PATH="$HOME/perl5/bin:$PATH"
 fi
 
+if [ -d "$HOME/.local/bin" ]; then
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 if [ -d "$HOME/.linuxbrew/bin" ]; then
   export PATH="$HOME/.linuxbrew/bin:$HOME/.linuxbrew/sbin:$PATH"
 elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
@@ -1102,17 +1117,27 @@ if ! type "fzf" > /dev/null; then
 		mkdir -p "$HOME/bin"
 		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
 	fi
+else
+
+	# https://github.com/junegunn/fzf/issues/1625
+	#   fzf acts like an interactive filter. Default search program is find, but can be changed via FZF_DEFAULT_COMMAND
+	if type rg &> /dev/null; then
+		export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
+		# To apply the command to CTRL-T as well: avoid cd **<TAB>, vi **<TAB> fail
+		export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+	fi
+
+	# fzf: global config {{{3
+	export FZF_DEFAULT_OPTS="
+	--bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down
+	--color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220
+	--color info:150,prompt:110,spinner:150,pointer:167,marker:174
+	"
+
+	# see zplugin-init.zsh with Turbo Mode
+	[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
 fi
-
-# fzf: global config {{{3
-export FZF_DEFAULT_OPTS='
---bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down
---color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220
---color info:150,prompt:110,spinner:150,pointer:167,marker:174
-'
-
-# see zplugin-init.zsh with Turbo Mode
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Vi keybinding
 #bindkey -v
