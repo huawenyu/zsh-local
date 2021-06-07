@@ -665,6 +665,9 @@ USAGE=$(cat <<-END
 
 	    smbget 1561 fos6 FGT_VM64_KVM
 	    smbget 0288 fpx  FPX_VMWARE
+
+	    smbget 0066 fos7 FGT_VM64
+	    smbget 0066 v7.0.0 FGT_VM64
 	  $0 [subdir] [text]
 END
 )
@@ -710,7 +713,13 @@ END
     #get ${model}-v6-build${buildnum}-FORTINET.out;
     #get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz;
     #get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;
-    if [ ${product} = "fos6" ]; then
+    if [ ${product} = "fpx" ]; then
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
+    elif [ ${product} = "ls" ]; then
+        #eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.deb;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
+    elif [ ${product} = "fos6" ]; then
         echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
             cd FortiOS/v6.00/images/build${buildnum}; \
@@ -718,18 +727,19 @@ END
             get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     elif [ ${product} = "fos7" ]; then
-        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz;'"
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
             cd FortiOS/v7.00/images/build${buildnum}; \
-            get ${model}-v7-build${buildnum}-FORTINET.deb.extra.tgz; \
-            get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz; \
+            get ${model}-v7.0.0-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
-    elif [ ${product} = "fpx" ]; then
-        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-    elif [ ${product} = "ls" ]; then
-        #eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.deb;'"
-        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
+    elif [[ ${product} = v7* ]]; then
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+            cd FortiOS/v7.00/images/build${buildnum}; \
+            get ${model}-${product}-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz; \
+            '"
     else
         Echo $USAGE
         USAGE=''
