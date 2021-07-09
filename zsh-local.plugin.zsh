@@ -220,8 +220,8 @@ fi
 
 # dev-var
 conf_fort=true
-# Also should set ftpsvr in /etc/hosts
-conf_use_ftps=false
+# Also should set ftpsvr/sftpsvr in /etc/hosts
+conf_use_sftp=true
 if [ ! -v MYPATH_HEYTMUX ]; then
     export MYPATH_HEYTMUX="$HOME/script/heytmux"
 fi
@@ -833,22 +833,27 @@ alias tail='_mytail'
 # function prepare ftp {{{2
 function _my_pre_ftp()
 {
-    if ! HasVar $LFTP_CMD; then
+    #if ! HasVar $LFTP_CMD; then
         if $conf_fort ; then
-            ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
-            #echo "### @Note the ftpsvr is ${ftpAddr} ###"
-
-            if $conf_use_ftps ; then
+            if $conf_use_sftp ; then
+                ftpAddr=$(getent hosts sftpsvr | awk '{ print $1 }')
+                echo "### @Note the ftpsvr is ${ftpAddr} ###"
+                #
                 # sftpserver
-                export LFTP_CMD="lftp sftp://hyu:@${ftpAddr} -e "
+                # sshpass -p ${MY_SSH_PASSWORD0} sftp -oBatchMode=no -b YOUR_COMMAND_FILE_PATH USER@HOST
+                # lftp sftp://admin:password123@serial.local
+                export LFTP_CMD="lftp sftp://hyu:${MY_SSH_PASSWORD0}@${ftpAddr} -e "
                 export LFTP_DIR=$USER
             else
+                ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
+                echo "### @Note the ftpsvr is ${ftpAddr} ###"
+                #
                 # ftpserver
                 export LFTP_CMD="lftp -u test,test ${ftpAddr} -e "
                 export LFTP_DIR=upload/$USER
             fi
         fi
-    fi
+    #fi
 };
 
 
