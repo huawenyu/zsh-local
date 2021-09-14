@@ -221,7 +221,7 @@ fi
 # dev-var
 conf_fort=true
 # Also should set ftpsvr/sftpsvr in /etc/hosts
-conf_use_sftp=true
+conf_use_sftp=false
 if [ ! -v MYPATH_HEYTMUX ]; then
     export MYPATH_HEYTMUX="$HOME/script/heytmux"
 fi
@@ -246,12 +246,14 @@ fi
 
 # alias: pwd, dict, sharepatch {{{2
 alias pwd=" pwd | sed 's/^/ /g'"
+#alias pwd=' pwd -L'
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
 alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
 alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"
 #alias ls='ls -lart'
+alias ti='tig --all'
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
@@ -727,11 +729,17 @@ END
             get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     elif [ ${product} = "fos7" ]; then
-        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz;'"
+        # echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz;'"
+        # eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+        #     cd FortiOS/v7.00/images/build${buildnum}; \
+        #     get ${model}-v7.0.0-build${buildnum}-FORTINET.deb.extra.tgz; \
+        #     get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz; \
+        #     '"
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz;'"
         eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
             cd FortiOS/v7.00/images/build${buildnum}; \
-            get ${model}-v7.0.0-build${buildnum}-FORTINET.deb.extra.tgz; \
-            get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz; \
+            get ${model}-v7-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     elif [[ ${product} = v7* ]]; then
         echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz;'"
@@ -1126,6 +1134,9 @@ fi
 # Disable warning messsage:
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
+
+# batcat: sudo apt install bat
+export BAT_THEME="Monokai Extended"
 
 # fzf {{{2
 if ! type "fzf" > /dev/null; then
