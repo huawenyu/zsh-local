@@ -658,7 +658,7 @@ unsetopt nomatch
 function _mysmbget()
 {
 USAGE=$(cat <<-END
-	  $0 buildnum (fos6|fos7|fpx|ls) model
+	  $0 buildnum (fos6|fos701|fpx|ls) model
 	  Sample:
 	    smbget 1561 ls
 
@@ -668,7 +668,7 @@ USAGE=$(cat <<-END
 	    smbget 1561 fos6 FGT_VM64_KVM
 	    smbget 0288 fpx  FPX_VMWARE
 
-	    smbget 0066 fos7 FGT_VM64
+	    smbget 0066 fos701 FGT_VM64
 	    smbget 0066 v7.0.0 FGT_VM64
 	  $0 [subdir] [text]
 END
@@ -740,6 +740,13 @@ END
             cd FortiOS/v7.00/images/build${buildnum}; \
             get ${model}-v7-build${buildnum}-FORTINET.deb.extra.tgz; \
             get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz; \
+            '"
+    elif [ ${product} = "fos701" ]; then
+        echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz;'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+            cd FortiOS/v7.00/images/build${buildnum}; \
+            get ${model}-v7.0.1-build${buildnum}-FORTINET.deb.extra.tgz; \
+            get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     elif [[ ${product} = v7* ]]; then
         echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz;'"
