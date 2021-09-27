@@ -1054,14 +1054,15 @@ alias  perldoctest='perl -MTest::Doctest -e run'
 
 export AWKPATH=".:$HOME/script/awk:$HOME/script/awk/awk-libs:$AWKPATH";
 
-export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"
-export PYENV_ROOT="${HOME}/.pyenv"
+# Python virtual env
+	export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"
+	eval "$(direnv hook zsh)"
 
-eval "$(direnv hook zsh)"
-# if [ -d "${PYENV_ROOT}" ]; then
-#   export PATH="${PYENV_ROOT}/bin:${PATH}"
-#   eval "$(pyenv init -)"
-# fi
+	# export PYENV_ROOT="${HOME}/.pyenv"
+	# if [ -d "${PYENV_ROOT}" ]; then
+	#   export PATH="${PYENV_ROOT}/bin:${PATH}"
+	#   eval "$(pyenv init -)"
+	# fi
 
 # export JAVA_HOME="/usr/java/latest"
 export JAVA_HOME="/usr/lib/jvm/java-8-oracle"
