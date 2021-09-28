@@ -312,15 +312,18 @@ END
         Run cd /home
         Run sudo mkdir -p ${userName}
         Run sudo chmod 755 ${userName}
-        Run sudo useradd -s /bin/rbash -d /home/${userName} ${userName}
-        Run sudo passwd ${userName}
+
+        Run sudo touch /home/$userName/share
+        Run sudo chmod 777 /home/$userName/share
+        echo "tmux -S /tmp/tmux_${sesName} attach -t ${sesName}" > /home/$userName/share
+
+        #Run sudo useradd -s /bin/rbash -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
+        Run sudo useradd -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
 
         # create the 'share' session but not attach it.
         Run tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
         Run sudo chmod 777 /tmp/tmux_${sesName}
         Run tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
-
-        echo "ShareLink: ssh ${userName}@work -t 'tmux -S /tmp/tmux_${sesName} attach -t ${sesName}'"
     elif [ ${action} == "del" ]; then
         #Run sudo userdel -r ${userName}
         Run tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
@@ -331,7 +334,13 @@ END
 };
 alias tshare='_task_share_screen'
 
-alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+if command -v autossh &> /dev/null
+then
+    alias swork="autossh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+else
+    alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+fi
+
 alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
 alias mwork2="mosh hyu@work2 -- sh -c 'tmux attach -t work || tmux new -s work'"
 
