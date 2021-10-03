@@ -233,9 +233,15 @@ if [ ! -v MYPATH_WORK ]; then
     export MYPATH_WORK="$HOME/work"
 fi
 if [ ! -v MYPATH_WIKI ]; then
-    export MYPATH_WIKI="$HOME/doc"
+	export MYPATH_WIKI="$HOME/work-doc"
 fi
 
+if command -v cheat &> /dev/null; then
+	export DEFAULT_CHEAT_DIR=$HOME/dotwiki/cheat
+	if command -v fzf &> /dev/null; then
+		export CHEAT_USE_FZF=true
+	fi
+fi
 
 # PS1 {{{2
 #parse_git_branch() {
@@ -247,13 +253,29 @@ fi
 # alias: pwd, dict, sharepatch {{{2
 alias pwd=" pwd | sed 's/^/ /g'"
 #alias pwd=' pwd -L'
+
+# sudo apt install -y tldr
+if command -v tldr &> /dev/null; then
+	alias h=tldr
+fi
+
+# pip3 install thefuck --user
+if command -v fuck &> /dev/null; then
+	alias x=fuck
+fi
+
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
 alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
+
 alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"
+
 #alias ls='ls -lart'
-alias ti='tig --all'
+if command -v tig &> /dev/null; then
+	alias ti='tig --all'
+fi
+
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
