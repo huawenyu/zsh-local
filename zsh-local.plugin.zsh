@@ -236,8 +236,13 @@ if [ ! -v MYPATH_WIKI ]; then
 	export MYPATH_WIKI="$HOME/work-doc"
 fi
 
+# Cheat:
+# - Don't use the python version
+# - Install download the bin from https://github.com/cheat/cheat/releases
 if command -v cheat &> /dev/null; then
-	export DEFAULT_CHEAT_DIR=$HOME/dotwiki/cheat
+	export CHEAT_CONFIG_PATH="$HOME/.cheat.yml"
+	# Using config to support multiple dirs
+	#export DEFAULT_CHEAT_DIR=$HOME/dotwiki/cheat
 	if command -v fzf &> /dev/null; then
 		export CHEAT_USE_FZF=true
 	fi
