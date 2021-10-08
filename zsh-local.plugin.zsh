@@ -265,10 +265,10 @@ if command -v tldr &> /dev/null; then
 fi
 
 # pip3 install thefuck --user
-if command -v fuck &> /dev/null; then
-	alias x=fuck
+if command -v thefuck &> /dev/null; then
+	alias x=thefuck
 else
-	echo "Install theFuch: pip3 install --user thefuck"
+	echo "Install theFuck: pip3 install --user thefuck"
 fi
 
 alias dict="$HOME/tools/dict"
