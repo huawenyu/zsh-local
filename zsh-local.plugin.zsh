@@ -264,12 +264,12 @@ if command -v tldr &> /dev/null; then
 	alias h=tldr
 fi
 
-# pip3 install thefuck --user
-if command -v thefuck &> /dev/null; then
-	alias x=thefuck
-else
-	echo "Install theFuck: pip3 install --user thefuck"
-fi
+## pip3 install thefuck --user
+#if command -v thefuck &> /dev/null; then
+#	alias x=thefuck
+#else
+#	echo "Install theFuck: pip3 install --user thefuck"
+#fi
 
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
