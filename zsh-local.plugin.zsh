@@ -1102,6 +1102,11 @@ export AWKPATH=".:$HOME/script/awk:$HOME/script/awk/awk-libs:$AWKPATH";
 	#   eval "$(pyenv init -)"
 	# fi
 
+	## debug neovim python plugin:
+	#export NVIM_PYTHON_LOG_FILE=/tmp/log
+	#export NVIM_PYTHON_LOG_LEVEL=DEBUG
+	export GDB_PRETTY_PRINT=$HOME/dotwiki/script/pretty-print
+
 # export JAVA_HOME="/usr/java/latest"
 export JAVA_HOME="/usr/lib/jvm/java-8-oracle"
 
@@ -1141,10 +1146,6 @@ fi
 #if [ -d "$HOME/..fzf_browser" ]; then
 #  export PATH=${PATH}:~/.fzf_browser
 #fi
-
-## debug neovim python plugin:
-#export NVIM_PYTHON_LOG_FILE=/tmp/log
-#export NVIM_PYTHON_LOG_LEVEL=DEBUG
 
 export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
 #export CDPATH=.:$CDPATH
