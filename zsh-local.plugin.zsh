@@ -271,6 +271,7 @@ fi
 #	echo "Install theFuck: pip3 install --user thefuck"
 #fi
 
+alias vimdiff="icdiff --line-numbers"
 alias dict="$HOME/tools/dict"
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
 #alias meld="nohup $HOME/tools/meld/bin/meld"
