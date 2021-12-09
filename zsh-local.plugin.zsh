@@ -1026,10 +1026,12 @@ function _bear()
     if [ -f compile_commands.json ]; then
         ;
     else
-        branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+		if [ -z ${branch+x} ]; then
+			branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+		fi
         cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
     fi
-    sample_dir=$(awk 'match($0, /-I(.*)\/fortiweb\/packages\/ext/, arr) {print arr[1]; exit}' compile_commands.json)
+    sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
     #echo $sample_dir
     cur_dir=$(realpath .)
     #sed -i "s;$sample_dir;$cur_dir;g" compile_commands.json
@@ -1037,6 +1039,13 @@ function _bear()
 };
 alias bearme='_bear'
 
+if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
+	alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so '
+elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
+	alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so -- '
+fi
+
+alias myclang='clang -fms-extensions -Wno-microsoft-anon-tag '
 
 # Setup env vars {{{1
 #
