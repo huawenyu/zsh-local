@@ -35,6 +35,8 @@ me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 ## default Ctrl-L clear-screen, which cause the terminal blinking when tmux bindto select-left-pane
 ## bindkey -r "^L"
 
+# local define zsh-completion
+fpath+="${0:h}/src"
 
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8

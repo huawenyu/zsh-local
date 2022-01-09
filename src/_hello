@@ -1,0 +1,17 @@
+#compdef hello
+
+function _hello() {
+    local state
+    _arguments '1: :(cat head)' '2: :->log' '3: :->cache'
+
+    case $state in
+        log)
+            _describe 'command' "($(ls $1))"    #this is for demonstration purpose only, you'll use _files utility to list a directories
+            ;;
+        cache)
+            compadd one two #this could be done above also, in _arguments, you know how :)
+            ;;
+    esac
+}
+
+// vim: set ft=bash

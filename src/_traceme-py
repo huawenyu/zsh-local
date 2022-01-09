@@ -1,0 +1,49 @@
+#compdef traceme.py
+
+typeset -A opt_args
+
+###option specs: OPT[DESCRIPTION]:MESSAGE:ACTION
+###command specs: N:MESSAGE:ACTION. N indicates that it is the Nth command argument.
+#_arguments '1: :(add clear)' '2: :->log' '3: :->cache'
+
+_arguments -C \
+	"-h[Show help information]" \
+	"--h[Show help information]" \
+	"-a[Take action]: :->action" \
+	"-t[Trace type, the dir name of patch files]: :->dir" \
+	"*::arg:->args" \
+&& ret=0
+
+case $state in
+	(dir3)
+		declare -a arrDir
+		for file in $(ls -d ~/dotwiki/tool/trace-*)
+		do
+			arrDir=("${arrDir[@]}" "$(basename $file)")
+		done
+
+		_describe 'command' "$arrDir"    #this is for demonstration purpose only, you'll use _files utility to list a directories
+		;;
+	(action)
+		local generators; generators=(
+			'add:Add trace to the specific module'
+			'clear:Clear/Remove trace from the specific module'
+		)
+		_describe -t generators 'generator' generators && ret=0
+		;;
+	(dir)
+		local arrDir;
+		arrDir=()
+		for file in $(ls -d ~/dotwiki/tool/trace-*)
+		do
+			modname=${file#*-}
+			arrDir=("${arrDir[@]}" "$(basename $file):Add trace to '$modname' by $file")
+		done
+		_describe -t arrDir 'arrDir' arrDir && ret=0
+		;;
+	(cache)
+		compadd one two #this could be done above also, in _arguments, you know how :)
+		;;
+esac
+
+#// vim: set ft=bash
