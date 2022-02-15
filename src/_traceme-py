@@ -1,5 +1,14 @@
 #compdef traceme.py
 
+### Usage
+# $ traceme.py -<TAB>
+#   -a <TAB>
+#   add -- Add tracelog
+#   clear -- Clear tracelog
+# $ traceme.py -a add -<TAB>
+# --h -h -- Show help information
+# -t     -- Trace type, the dir name of patch files
+
 typeset -A opt_args
 
 ###option specs: OPT[DESCRIPTION]:MESSAGE:ACTION
@@ -9,25 +18,16 @@ typeset -A opt_args
 _arguments -C \
 	"-h[Show help information]" \
 	"--h[Show help information]" \
-	"-a[Take action]: :->action" \
-	"-t[Trace type, the dir name of patch files]: :->dir" \
+	"-a[The action add|clear]: :->action" \
+	"-t[The specific model|mudule of trace]: :->dir" \
 	"*::arg:->args" \
 && ret=0
 
 case $state in
-	(dir3)
-		declare -a arrDir
-		for file in $(ls -d ~/dotwiki/tool/trace-*)
-		do
-			arrDir=("${arrDir[@]}" "$(basename $file)")
-		done
-
-		_describe 'command' "$arrDir"    #this is for demonstration purpose only, you'll use _files utility to list a directories
-		;;
 	(action)
 		local generators; generators=(
 			'add:Add trace to the specific module'
-			'clear:Clear/Remove trace from the specific module'
+			'clear:Clear|Remove trace from the specific model|module'
 		)
 		_describe -t generators 'generator' generators && ret=0
 		;;
@@ -40,9 +40,6 @@ case $state in
 			arrDir=("${arrDir[@]}" "$(basename $file):Add trace to '$modname' by $file")
 		done
 		_describe -t arrDir 'arrDir' arrDir && ret=0
-		;;
-	(cache)
-		compadd one two #this could be done above also, in _arguments, you know how :)
 		;;
 esac
 
