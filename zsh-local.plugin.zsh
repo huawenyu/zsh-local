@@ -1215,7 +1215,7 @@ else
 
 	# fzf: global config {{{3
 	export FZF_DEFAULT_OPTS="
-	--bind=ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down
+	--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down
 	--color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220
 	--color info:150,prompt:110,spinner:150,pointer:167,marker:174
 	"
