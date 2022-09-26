@@ -1041,6 +1041,8 @@ function _bear()
 };
 alias bearme='_bear'
 
+# Wrap make(gcc) to generate compile_commands.json used by clangd-language-server
+#   sudo apt-get install -y clangd bear
 if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
 	alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so '
 elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
@@ -1106,7 +1108,11 @@ export AWKPATH=".:$HOME/script/awk:$HOME/script/awk/awk-libs:$AWKPATH";
 
 # Python virtual env
 	export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"
-	eval "$(direnv hook zsh)"
+
+	# Silent direnv, thefuck
+	if command -v direnv &> /dev/null; then
+		eval "$(direnv hook zsh)"
+	fi
 
 	# export PYENV_ROOT="${HOME}/.pyenv"
 	# if [ -d "${PYENV_ROOT}" ]; then
