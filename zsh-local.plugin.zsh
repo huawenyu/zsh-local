@@ -297,7 +297,7 @@ if [ -n ${MY_SYNC_LOCAL} ] && [ -n ${MY_SYNC_REMOTE} ]; then
 	for i in {1}; do
 		if command -v bsync &> /dev/null; then
 			if command -v rsync &> /dev/null; then
-				alias syncme = "bsync -v -i ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
+				alias syncme="bsync -v -i ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
 				break
 			fi
 		fi
