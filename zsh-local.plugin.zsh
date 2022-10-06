@@ -217,7 +217,7 @@ if [ -f "$HOME/.local/local" ]; then
     #echo "load local succ!"
     source $HOME/.local/local
 else
-    Echo "[$me] no local-env loaded from '$HOME/.local/local', but it's harmless!"
+    Echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
 fi
 
 # dev-var
@@ -290,8 +290,24 @@ alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.;
 
 # fake sudo vim ~/root/etc/hosts
 #    ln -s /drives/c/Windows/System32/drivers/ ./root
-alias sync-push="rsync -avrz --progress ~/share/ hyu@work:${MYPATH_WORKREF}/share/"
-alias sync-pull="rsync -avrz --progress hyu@work:${MYPATH_WORKREF}/share/ ~/share/"
+
+# https://github.com/dooblem/bsync
+# Suppose we can define the DIRs in `~/.local/local`
+if [ -n ${MY_SYNC_LOCAL} ] && [ -n ${MY_SYNC_REMOTE} ]; then
+	for i in {1}; do
+		if command -v bsync &> /dev/null; then
+			if command -v rsync &> /dev/null; then
+				bsync -v -i ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}
+				break
+			fi
+		fi
+
+		if command -v rsync &> /dev/null; then
+			alias sync-push="rsync -avrz --progress ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
+			alias sync-pull="rsync -avrz --progress ${MY_SYNC_REMOTE} ${MY_SYNC_LOCAL}"
+		fi
+	done
+fi
 
 
 # pair-programer: share terminal screen {{{2
