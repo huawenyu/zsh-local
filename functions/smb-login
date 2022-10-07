@@ -1,0 +1,25 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# image: Swap-1Day
+# devqa: DevQA/Image
+if [ -z ${1} ]; then
+    dname=${PWD##*/}
+    echo "self <server-type>  Working dir '$dname'!"
+
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day"
+else
+    duttype=${1}
+    if [ "$duttype" = "image" ]; then
+        svr="imagesvr"
+        subpath1="/Swap-1Day"
+    elif [ "$duttype" = "devqa" ]; then
+        svr="devqasvr"
+        subpath1="/DevQA"
+    else
+        echo "self <server> like 'image|devqa' Working dir '$dname'!"
+    fi
+
+    eval "smbclient -A ~/.smbclient.conf //$svr$subpath1"
+fi
+

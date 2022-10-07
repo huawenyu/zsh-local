@@ -1,0 +1,27 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+#if chk-var $LFTP_CMD; then
+#   return
+#fi
+
+if $conf_fort ; then
+    if $conf_use_sftp ; then
+        ftpAddr=$(getent hosts sftpsvr | awk '{ print $1 }')
+        echo "### @Note the ftpsvr is ${ftpAddr} ###"
+        #
+        # sftpserver
+        # sshpass -p ${MY_SSH_PASSWORD0} sftp -oBatchMode=no -b YOUR_COMMAND_FILE_PATH USER@HOST
+        # lftp sftp://admin:password123@serial.local
+        export LFTP_CMD="lftp sftp://hyu:${MY_SSH_PASSWORD0}@${ftpAddr} -e "
+        export LFTP_DIR=$USER
+    else
+        ftpAddr=$(getent hosts ftpsvr | awk '{ print $1 }')
+        echo "### @Note the ftpsvr is ${ftpAddr} ###"
+        #
+        # ftpserver
+        export LFTP_CMD="lftp -u test,test ${ftpAddr} -e "
+        export LFTP_DIR=upload/$USER
+    fi
+fi
+

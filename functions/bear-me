@@ -1,0 +1,22 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# Generate the c/c++ ccls indexer db: ccls clang makefile
+if ! is-callable bear; then
+    return
+fi
+
+if [ -f compile_commands.json ]; then
+	;
+else
+	if [ -z ${branch+x} ]; then
+		branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+	fi
+	cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
+fi
+sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
+#echo $sample_dir
+cur_dir=$(realpath .)
+#sed -i "s;$sample_dir;$cur_dir;g" compile_commands.json
+do-cmd "sed -i 's;$sample_dir;$cur_dir;g' compile_commands.json"
+

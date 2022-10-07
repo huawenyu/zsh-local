@@ -1,0 +1,18 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+ftp-prepare
+if [ -z ${1} ]; then
+    dname=${PWD##*/}
+    echo "  Removing '$dname'!"
+    eval "$LFTP_CMD 'cd $LFTP_DIR; rm -fr $dname; quit;'"
+else
+    for var in "$@"
+    do
+        echo "  Removing '$var'!"
+        eval "$LFTP_CMD 'cd $LFTP_DIR; rm -fr $var; quit;'"
+    done
+fi
+
+eval "$LFTP_CMD 'cd $LFTP_DIR; ls; quit;'"
+

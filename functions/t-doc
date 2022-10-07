@@ -1,0 +1,24 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# Show current task's document {{{2
+USAGE=$(cat <<-END
+	  $0  <null>      +--- list current project doc
+	  $0  anystring   +--- list all doc
+END
+)
+
+nameWindow=$(tmux display-message -p '#W')
+projDir=$(find ${MYPATH_WORKREF}/doc -type d -name "*${nameWindow}")
+
+if [ ! -z ${projDir} ]; then
+    tree -if --noreport $projDir \
+        | fzf --keep-right --preview 'bat --color=always --style=numbers --line-range=:500 {} 2> /dev/null' --preview-window +{2}-/2 \
+        | xargs -r -o $EDITOR
+else
+    tree -if --noreport ${MYPATH_WORKREF}/doc \
+        | fzf --keep-right --preview 'bat --color=always --style=numbers --line-range=:500 {}  2> /dev/null' --preview-window +{2}-/2 \
+        | xargs -r -o $EDITOR
+fi
+echo $USAGE
+

@@ -1,0 +1,42 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+#
+# MUST config: ~/.smbclient.conf
+#
+put_files=("patch.diff" \
+  "patch.eco.diff" \
+  "image.out" \
+  "fgtcoveragebuild.tar.xz" \
+  "fgtcoveragebuild.tar.bz2" \
+  "checklist.txt" \
+  "fortios.qcow2" \
+  "fortiproxy.qcow2" \
+  "image.out.vmware.zip" \
+  "image.out.ovf.zip" \
+  "image.out.hyperv.zip" \
+  "image.out.gcp.tar.gz" \
+  "image.out.kvm.zip" \
+  "image.out.gcp.tar.gz" \
+)
+
+if [ -z ${1} ]; then
+    dname=${PWD##*/}
+    echo "  Working dir '$dname'!"
+
+    #eval "$LFTP_CMD 'cd $LFTP_DIR; rm -fr $dname; quit;'"
+    #eval "smbclient //imagesvr/images -U 'fortinet-us/hyu' -c 'mkdir hyu; cd hyu; rmdir $dname; mkdir $dname; cd $dname; put image.out; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'mkdir hyu; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; rmdir $dname; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; mkdir $dname; q;'"
+
+    for one_file in "${put_files[@]}"
+    do
+        if [ -f ${one_file} ]; then
+            eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; put ${one_file}; q;'"
+        fi
+    done
+
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; pwd; ls; q;'"
+fi
+

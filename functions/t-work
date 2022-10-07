@@ -1,0 +1,17 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# https://infoheap.com/bash-pass-all-arguments-from-one-script-to-another/
+parse-args "$@"
+
+if is-callable autossh; then
+    alias swork="autossh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+elif is-callable ssh; then
+    alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
+fi
+
+if is-callable mosh; then
+	alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
+	alias mwork2="mosh hyu@work2 -- sh -c 'tmux attach -t work || tmux new -s work'"
+fi
+

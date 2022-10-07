@@ -1,0 +1,12 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+if [ -z ${1} ]; then
+    echo "  Please give a mirror dir name!"
+else
+    dname=${1}
+    echo "  Mirror '$dname'!"
+    ftp-prepare
+    eval "$LFTP_CMD 'cd $LFTP_DIR; mirror $dname; quit;'"
+fi
+

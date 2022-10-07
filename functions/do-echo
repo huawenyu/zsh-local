@@ -1,0 +1,13 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# function do-echo {{{3
+# if [ -x boxes ]; then echo "exist"; else echo "not exist"; fi
+function do-echo() {
+    if is-callable boxes; then
+        echo "$*" | boxes
+    else
+        echo "$*"
+    fi
+}
+

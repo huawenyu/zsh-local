@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+
+local r_dir="$PWD"
+
+for file in "$@"; do
+  if [[ -e "$r_dir/${file}" ]]; then
+    return 0
+  fi
+done
+
+while [[ "$r_dir" != "/" ]]; do
+  r_dir="${r_dir:h}"
+
+  for file in "$@"; do
+    if [[ -e "$r_dir/${file}" ]]; then
+      return 0
+    fi
+  done
+done
+
+return -1

@@ -1,0 +1,35 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+
+# @Note:
+#    indent tabs (i.e., '\t') will be stripped out,
+#     indent with spaces will be left in.
+#     ${FUNCNAME[0]} not show current function name, but $0 works
+USAGE=$(cat <<-END
+	  dryrun: dryrun=1 do-cmd ls -lart
+	      tshare add user1
+	      tshare del user1
+	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
+	  tlayout: new | list | set | clone
+END
+)
+
+echo "${USAGE}"
+
+fcmd="/tmp/my_tmp_cmd"
+rm -f $fcmd
+if test -n "$ZSH_VERSION"; then
+    # ${(k)aliases} ${(k)functions}
+    print -rl -- ${(k)aliases} | grep -v zsh | awk 'length($0)>3' | fzf | xargs -r -I{} echo '{}' > $fcmd
+elif test -n "$BASH_VERSION"; then
+    # ${(k)aliases} ${(k)functions}
+    declare -F | grep -v zsh | awk 'length($0)>3' | fzf | xargs -r -I{} echo '{}' > $fcmd
+fi
+
+if [ -f "$fcmd" ]; then
+    source $fcmd
+    rm -f $fcmd
+fi
+return 0
+

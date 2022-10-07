@@ -1,0 +1,6 @@
+#!/usr/bin/env zsh
+
+local pa
+pa=${PWD//\//${c[red]}${c[bold]}\/${c[blue]}${c[bold]}}
+pa=${c[blue]}${c[bold]}$pa
+echo $pa

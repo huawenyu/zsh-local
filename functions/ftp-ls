@@ -1,0 +1,6 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+ftp-prepare
+eval "$LFTP_CMD 'cd $LFTP_DIR; ls; quit;'"
+

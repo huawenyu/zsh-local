@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+
+case ":$PATH:" in
+  *:"$1":*)
+    ;;
+  *)
+    PATH="${1}:${PATH}"
+esac

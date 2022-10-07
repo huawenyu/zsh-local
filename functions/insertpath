@@ -1,0 +1,12 @@
+#!/usr/bin/env zsh
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# https://stackoverflow.com/questions/62873982/linux-check-if-path-exists
+#
+case ":$PATH:" in
+    *:"$1":*)
+        ;;
+    *)
+        PATH="$1:${PATH:+$PATH}"
+esac

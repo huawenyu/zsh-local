@@ -1,0 +1,5 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+#

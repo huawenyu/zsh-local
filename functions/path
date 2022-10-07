@@ -1,0 +1,19 @@
+#!/usr/bin/env zsh
+
+echo -n "${c[blue]}${c[bold]}"
+echo $PATH | tr ":" "\n" |                                                      \
+  awk "{                                                                        \
+      sub(\"$HOME\",\"${c[cyan]}${c[bold]}$HOME${c[blue]}${c[bold]}\");           \
+      sub(\"/usr\",\"${c[green]}${c[bold]}/usr${c[blue]}${c[bold]}\");            \
+      sub(\"/functions\",\"${c[red]}${c[bold]}/functions${c[blue]}${c[bold]}\");  \
+      sub(\"/bin\",\"${c[red]}${c[bold]}/bin${c[blue]}${c[bold]}\");              \
+      sub(\"/\\\\.bin\",\"${c[red]}${c[bold]}/.bin${c[blue]}${c[bold]}\");        \
+      sub(\"/sbin\",\"${c[red]}${c[bold]}/sbin${c[blue]}${c[bold]}\");            \
+      sub(\"/games\",\"${c[blue]}${c[bold]}/games${c[blue]}${c[bold]}\");         \
+      sub(\"/opt\",\"${c[cyan]}${c[bold]}/opt${c[blue]}${c[bold]}\");             \
+      sub(\"/local\",\"${c[yellow]}${c[bold]}/local${c[blue]}${c[bold]}\");       \
+      sub(\"/\\\\.local\",\"${c[yellow]}${c[bold]}/.local${c[blue]}${c[bold]}\"); \
+      sub(\"/lib\",\"${c[magenta]}${c[bold]}/lib${c[blue]}${c[bold]}\");          \
+      print }                                                                     \
+  "
+echo -n "$c[reset]"

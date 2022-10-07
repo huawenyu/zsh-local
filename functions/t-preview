@@ -1,0 +1,22 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+unset fname
+unset fline
+IN=$1
+mails=$(echo $IN | tr ":" "\n")
+
+for addr in $mails; do
+    if [ ! -v fname ]; then
+        fname=$addr
+    elif [ ! -v fline ]; then
+        fline=$addr
+    fi
+done
+
+# echo ${fname}
+# echo ${fline}
+# echo "done"
+
+sed -n "$fline,+20p" $fname
+

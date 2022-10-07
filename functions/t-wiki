@@ -1,0 +1,64 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# Show current task's document {{{2
+USAGE=$(cat <<-END
+	  $0 file  [text]  +--- list all files
+	  $0 [subdir] [text]
+END
+)
+
+unset greptext
+argExtra=''
+grepdir=$MYPATH_WIKI
+
+    # @args:subdir
+    if [ -z ${1} ]; then
+        greptext=' '
+    do-echo "${USAGE}"
+    else
+        subdir=$1
+        if [ ${subdir} == "file" ]; then
+            # list all file name only
+            argExtra='l'
+        else
+            if [ -d "$MYPATH_WIKI/${subdir}" ]; then
+                grepdir="$MYPATH_WIKI/${subdir}"
+            else
+                greptext=$1
+            fi
+        fi
+        shift
+    fi
+
+    if [ ! -v "greptext" ]; then
+        # @args:greptext
+        if [ -z ${1} ]; then
+            greptext=' '
+        else
+            greptext=$1
+            shift
+        fi
+    fi
+
+
+    # echo "length=${#greptext}"
+    # echo "rg -n${argExtra}L " "'"${greptext}"'" "$grepdir"
+    # do-cmd rg -n${argExtra}L "'"${greptext}"'" $grepdir
+    # rg -nlL ' ' /home/hyu/doc | wc -l
+    # rg -n${argExtra}L "'"${greptext}"'" $grepdir > /tmp/tmp_filelist
+    #
+
+    if [ ! -v "dryrun" ]; then
+        if [ ${greptext} == ' ' ]; then
+            rg -n${argExtra}L ' ' $grepdir \
+                | fzf --keep-right --preview "bat --color=always --style=numbers --line-range=:500 {}" --preview-window=up:40% \
+                | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+                        else
+                            rg -n${argExtra}L ${greptext} $grepdir \
+                                | fzf --keep-right --preview "bat --color=always --style=numbers --line-range=:500 {}" --preview-window=up:40% \
+                                | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
+        fi
+    else
+    do-cmd rg -n${argExtra}L "'"${greptext}"'" $grepdir
+    fi

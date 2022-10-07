@@ -1,0 +1,13 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# function chk-var {{{3
+# Usage: if chk-var $var; then echo "has var"; else echo "nopes"; fi
+function chk-var() {
+    if [ -z ${1+x} ]; then
+        # 1 = false
+        return 1
+    fi
+    # 0 = true
+    return 0
+}

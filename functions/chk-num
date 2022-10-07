@@ -1,0 +1,15 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# function chk-num {{{3
+# https://stackoverflow.com/questions/5431909/returning-a-boolean-from-a-bash-function
+# Usage: if chk-num $1; then echo "is number"; else echo "nopes"; fi
+function chk-num() {
+    if [ -n "$var" ] && [ "$var" -eq "$var" ] 2>/dev/null; then
+        # 0 = true
+        return 0
+    fi
+    # 1 = false
+    return 1
+}
+

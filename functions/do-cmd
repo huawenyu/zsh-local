@@ -1,0 +1,15 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+
+# dryrun="" do-cmd ls -lart
+if [ -v "dryrun" ]; then
+    echo "[dryrun]:	$*"
+    return 0
+elif [ -v "verbose" ]; then
+    echo "Executing $*"
+    eval "$@"
+else
+    eval "$@"
+fi
+

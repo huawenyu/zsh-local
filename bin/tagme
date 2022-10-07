@@ -1,0 +1,370 @@
+#!/bin/bash
+
+#echo "Generating tags and cscope database..."
+SECONDS=0
+scriptDir=$(dirname $0)
+workDir=$(pwd)
+echo "location: ${BASEDIR}"
+# Check with: $ ctags --list-kinds=c
+#ctags -e --c-kinds=+defgstum -L ${FLIST} > /dev/null 2>&1
+#
+#v1. CTAGS_FLAG=--extra=+f
+#v2. CTAGS_FLAG="--fields=+niazS --extra=+fq --c++-kinds=+px --c-kinds=+px --output-format=e-ctags"
+# ctags disable add the function protocol by remove "+p" from c-kinds
+#v3. CTAGS_FLAG="--fields=+niazS --extras=+Ffq --c++-kinds=+x --c-kinds=+x --output-format=e-ctags"
+# improve c-kinds
+CTAGS_FLAG="--fields=+niazS --extras=+Ffq --c++-kinds=+x --c-kinds=+defgstumx --output-format=e-ctags"
+FLIST="./.cscope.files"
+ClangdFile="compile_commands.json"
+
+
+## Other files:
+#     tags.temp
+#     tags.lock
+#     GTAGS
+#     GPATH
+#     GRTAGS
+#     .tagme       -- temperary build dir
+#     .ccls-cache
+#
+tag_files=( \
+  ".tagme" \
+  ".tags" \
+  ".tagx" \
+  ".cscope.files" \
+  "cscope.po.out" \
+  "cscope.in.out" \
+  "cscope.out" \
+  "${ClangdFile}" \
+)
+
+Help()
+{
+   # Display Help
+   echo "$ tagme"
+   echo "$ tagme -a link"
+   echo "$ tagme -a save"
+   echo "$ tagme -a clean"
+   echo
+   echo "Syntax: [-a|f|s|v|h]"
+   echo "options:"
+   echo "a     all(*),link,save,clean, #(tag,scope,ccls)"
+   echo "f     onefile mode."
+   echo "s     scope: all,wad,default."
+   echo "h     Print this Help."
+   echo "v     Verbose mode."
+   echo
+}
+
+
+###########################################
+# Initialize our own variables:
+verbose=0
+action="all"
+onefile=""
+tagscope="default"
+
+# A POSIX variable
+OPTIND=1         # Reset in case getopts has been used previously in the shell.
+while getopts "h?va:f:s:" opt; do
+    case "$opt" in
+    h|\?)
+        Help
+        exit 0
+        ;;
+    v)  verbose=1
+        ;;
+    a)  action=$OPTARG
+        ;;
+    f)  onefile=$OPTARG
+        ;;
+    s)  tagscope=$OPTARG
+        ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+[ "${1:-}" = "--" ] && shift
+###########################################
+
+
+# Check Arguments
+if [[ ! -f $onefile ]]; then
+	onefile=""
+fi
+echo "RunAs: a-action=$action s-tagscope=$tagscope f-onefile=$onefile"
+echo "     a: all,link,tag,scope,ccls,save,clean"
+echo "     s: default,all,wad"
+echo "     f: <source-file>"
+
+if [[ -z "$action" ]]; then
+	echo "No action, exit!"
+	exit 0
+fi
+
+
+# Copy/Save clangd compile commands
+ClangdCompileFile()
+{
+	#for run in {1..10}; do
+		if [[ -z ${origDir} ]]; then
+			origDir=$(git config --get remote.origin.url)
+			if [ ! -d $origDir ]; then
+				echo "Skip '$ClangdFile' for git-original-dir '${origDir}' not existed!"
+				#break
+				return
+			fi
+		fi
+
+		# Get the real path
+		origDir2=$(readlink -f ${origDir})
+		workDir2=$(readlink -f ${workDir})
+		if [ "$action" == "all" ] || [ "$action" == "link" ]; then
+			srcdir="$origDir"
+			dstdir="$workDir"
+			srcdir2="$origDir2"
+			dstdir2="$workDir2"
+			srcfile="${origDir}/${ClangdFile}"
+			dstfile="${workDir}/${ClangdFile}"
+		elif [ "$action" == "save" ]; then
+			dstdir="$origDir"
+			srcdir="$workDir"
+			dstdir2="$origDir2"
+			srcdir2="$workDir2"
+			dstfile="${origDir}/${ClangdFile}"
+			srcfile="${workDir}/${ClangdFile}"
+		fi
+
+		cp  $srcfile  $dstfile
+		sed -i   "s/${srcdir//\//\\/}/${dstdir//\//\\/}/g"  $dstfile
+		sed -i   "s/${srcdir2//\//\\/}/${dstdir2//\//\\/}/g"  $dstfile
+		echo "[Done!] Clangd ${ClangdFile}: ${srcdir} -> ${dstdir}"
+	#done
+}
+
+
+# Special handle: Rebuild the <file> assign by $1
+#   - <file> should be full-path
+if [[ -f "./.tags" && -f "$onefile" ]]; then
+	# only rebuild tags when the file belong curr dir
+	#if [[ "$1" == "$PWD/"* ]]; then
+		pwdlen=${#PWD}
+		LC_COLLATE=C ctags ${CTAGS_FLAG} -f .tags -a "./${onefile:$pwdlen}"
+		#duration=$SECONDS
+		#notify-send "Done tags R $(($duration / 60)):$(($duration % 60))."
+	#fi
+
+	exit 0
+fi
+
+
+if [ "$action" != "all" ] && [ "$action" != "save" ]; then
+	for tagfile in "${tag_files[@]}"
+	do
+		if [[ "$action" == "clean" ]]; then
+			rm -f $tagfile 2> /dev/null
+		elif [[ "$action" == "link" ]]; then
+			if [ $tagfile == ".tagme" ]; then
+				continue
+			fi
+
+			if [[ -z ${origDir} ]]; then
+				origDir=$(git config --get remote.origin.url)
+				if [ ! -d $origDir ]; then
+					echo "Dir '${origDir}' not existed, maybe we're not git-dir. Exit!"
+					exit 1
+				fi
+			fi
+
+			srcfile="${origDir}/$tagfile"
+			if [ ! -f ${srcfile} ]; then
+				echo "File '${srcfile}' not existed, skip and continue!"
+				continue
+			elif [[ "$tagfile" == "$ClangdFile" ]]; then
+				ClangdCompileFile
+			else
+				echo "Softlink '${srcfile}' -> '$tagfile'"
+				rm -f $tagfile 2> /dev/null
+				ln -s ${srcfile} $tagfile
+			fi
+		fi
+	done
+
+	echo "Done $action! Exit!"
+	exit 0
+fi
+
+
+
+#########################################################
+# Handle action=all/save {{{1
+if [ "$action" != "all" ] && [ "$action" != "save" ]; then
+	echo "Can't handle action '$action', Exit!"
+	exit 1
+fi
+
+ClangdCompileFile
+
+
+# Rebuild All
+rm -fr .tagme 2> /dev/null
+rm -f ${FLIST} 2> /dev/null
+mkdir -p ./.tagme
+
+# Issue "[: -ge: unary operator expected"
+# https://stackoverflow.com/questions/408975/compare-integer-in-bash-unary-operator-expected
+filecnt_c=0
+filecnt_rust=0
+if [ -f ${FLIST} ]; then
+	filecnt_c=1024
+else
+	filecnt_c=$(find . -maxdepth 3 -type f -name '*.c' | wc -l)
+	filecnt_rust=$(find . -maxdepth 3 -type f -name '*.rs' | wc -l)
+fi
+
+# Rust
+if [ $filecnt_rust -ge 3 ]; then
+	rusty-tags vi --output=".tags"
+	#exit 0
+fi
+
+if [ $filecnt_c -ge 3 ]; then
+	case "$tagscope" in
+	   "all")
+		   find -L . -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' > ./.tagme/cscope.f1
+	   ;;
+	   "wad")
+		   find daemon/wad -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' > ./.tagme/cscope.f1
+	   ;;
+	   *)
+		   find . -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' > ./.tagme/cscope.f1
+	   ;;
+	esac
+
+	wad_c=$(grep 'daemon/wad' ./.tagme/cscope.f1 | wc -l)
+	if [ $wad_c -ge 10 ]; then
+		cat ./.tagme/cscope.f1             | \
+			grep -v 'ccls-cache/'          | \
+			grep -v 'wad/ui/stdin/'        | \
+			grep -v 'wad/redirect/socket/' | \
+			grep -v 'wad/test/'            | \
+			grep -v 'wad/unittest/'        | \
+			grep -v 'wad/cache/test/'      | \
+			grep -v 'daemon/waagent/'      | \
+			grep -v 'linux/'               | \
+			grep -v 'linux-.*/'            | \
+			grep -v 'compress/'            | \
+			grep -v 'cooked/'              | \
+			grep -v 'fortitest/'           | \
+			grep -v 'linuxatm/'            | \
+			grep -v 'sysctl/'              | \
+			grep -v 'sysapi/stream_scan/tests/'  | \
+			grep -v 'router/'              | \
+			grep -v 'fortiweb/'            | \
+			grep -v 'fortitest/'           | \
+			grep -v 'tests/gtest/'         | \
+			grep -v 'tests/'               | \
+			grep -v 'tools/'               | \
+			grep -v '/_' \
+			> ./.tagme/cscope.f2
+	else
+		cat ./.tagme/cscope.f1             | \
+			grep -v 'ccls-cache/'          | \
+			grep -v '/_' \
+			> ./.tagme/cscope.f2
+	fi
+
+	sort ./.tagme/cscope.f2 > ./.tagme/cscope.f3
+	mv ./.tagme/cscope.f3 ${FLIST}
+else
+	FLIST=""
+fi
+
+
+GenTag()
+{
+	rm -f .tags 2> /dev/null
+	rm -f .tagx 2> /dev/null
+	rm -f GTAGS 2> /dev/null
+	rm -f GPATH 2> /dev/null
+	rm -f GRTAGS 2> /dev/null
+	rm -f tags 2> /dev/null
+	rm -f tagx 2> /dev/null
+	rm -f tags.lock 2> /dev/null
+	rm -f tags.temp 2> /dev/null
+
+	#    /usr/bin/time gtags -f ${FLIST}
+	#    /usr/bin/time global -u -L ${FLIST}
+	rm -f .tags 2> /dev/null
+	rm -f .tagx 2> /dev/null
+
+	if [[ -z ${FLIST} ]]; then
+		# tage-emacs, tags-vim, tagx-fuzzy
+		#LC_COLLATE=C ctags -e ${CTAGS_FLAG} -f .tage -R . > /dev/null 2>&1
+		LC_COLLATE=C ctags ${CTAGS_FLAG} -f .tags  --exclude=.git --exclude=node_modules --exclude=.ccls-cache -R . > /dev/null 2>&1
+		LC_COLLATE=C ctags --exclude=.git --exclude=node_modules --exclude=.ccls-cache -xR . > .tagx 2>/dev/null
+	else
+		# tage-emacs, tags-vim, tagx-fuzzy
+		#LC_COLLATE=C ctags -e ${CTAGS_FLAG} -L ${FLIST} -f .tage > /dev/null 2>&1
+		LC_COLLATE=C ctags ${CTAGS_FLAG} -L ${FLIST} -f .tags > /dev/null 2>&1
+		LC_COLLATE=C ctags -xL ${FLIST} > .tagx 2>/dev/null
+	fi
+}
+
+GenScope()
+{
+	rm -f cscope.* 2> /dev/null
+
+	if [[ -z ${FLIST} ]]; then
+		cscope -bcqR > /dev/null 2>&1
+	else
+		cscope -kbq -i ${FLIST} > /dev/null 2>&1
+	fi
+}
+
+GenCcls()
+{
+	rm -fr .ccls-cache 2> /dev/null
+	ccls --index=. --init='{"clang":{"extraArgs": ["-fms-extensions", "-Wno-microsoft-anon-tag", "-Wno-microsoft", "-Wno-gnu-anonymous-struct"]}}' > /dev/null 2>&1
+}
+
+pidTag=0
+if [[ "$action" == "all" || "$action" == "tag" ]]; then
+	GenTag &
+	pidTag=$!
+fi
+
+pidCscope=0
+if [[ "$action" == "all" || "$action" == "cscope" ]]; then
+	GenScope &
+	pidCscope=$!
+fi
+
+#pidCcls=0
+#if [[ "$action" == "all" || "$action" == "ccls" ]]; then
+#	GenCcls &
+#	pidCcls=$!
+#fi
+
+# wait all parallel tasks done
+jobs
+
+if [ ${pidTag:-0} -gt 0 ]; then
+	wait $pidTag
+	echo "ctag done!"
+fi
+if [ ${pidCscope:-0} -gt 0 ]; then
+	wait $pidCscope
+	echo "cscope done!"
+fi
+if [ ${pidCcls:-0} -gt 0 ]; then
+	wait $pidCcls
+	echo "ccls done!"
+fi
+
+rm -fr ./.tagme
+
+duration=$SECONDS
+echo "Done $(($duration / 60))m:$(($duration % 60))s"
+

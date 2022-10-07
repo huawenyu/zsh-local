@@ -1,0 +1,111 @@
+#!/bin/bash -eu
+# -e  Exit immediately on error
+# -u  Treat unset variables as an error
+
+usage () {
+    cat<<EOF
+usage: git submit [<options>] [<remote>]
+
+Submit commits from the current local branch to the remote tracking
+branch for review on Gerrit.
+
+    -c              Specify someone to CC (but not make a reviewer).
+    -p              Submit as a private change.
+    -P              Make a private change public.
+    -r <reviewer>   Specify a reviewer. Use one "-r" per reviewer.
+    -t <tag>        Set a "hashtag". A change may have multiple hash tags.
+    -T <topic>      Set a topic. A change may only have one topic.
+    -w              Submit as a work-in-progress change.
+    -W              Mark a work-in-progress change ready for review.
+    -f              Override logic preventing this script from submitting
+                        a dev_* branch.
+                        NOTE: GIT_SUBMIT_ALLOW_DEV_BRANCH=1 in your
+                        environment will permanently disable this check
+    -h              Usage.
+
+  remote
+
+    Default: 'origin'. Specify the name of the remote repository.
+    Typically, in a default gerrit workflow, this will be 'origin'.
+
+See the Gerrit documentation for details on private and
+work-in-progress changes:
+
+    https://gerrit.fortinet.com/g/Documentation/intro-user.html
+
+EOF
+}
+
+push_options=""
+force_dev_submit=${GIT_SUBMIT_ALLOW_DEV_BRANCH:-0}
+
+add_option() {
+    local opt="$1"
+
+    push_options="${push_options} -o ${opt}"
+}
+
+# p: private change
+# P: clear private flag on change
+# w: work in progress change
+# W: clear work in progress flag (change is now ready)
+#
+while getopts "c: h p P r: t: T: w W f" OPTION; do
+    case $OPTION in
+        c) add_option "cc=${OPTARG}";;
+        p) add_option "private";;
+        P) add_option "remove-private";;
+        r) add_option "r=${OPTARG}";;
+        t) add_option "t=${OPTARG}";;
+        T) add_option "topic=${OPTARG}";;
+        w) add_option "wip";;
+        W) add_option "ready";;
+        f) force_dev_submit=1;;
+        *) usage; exit 1;;
+    esac
+done
+
+shift $(($OPTIND - 1))
+
+if [ -z "${1:-}" ]; then
+    remote=origin
+else
+    remote=$1
+fi
+
+branch=$(git symbolic-ref HEAD) || true
+case ${branch} in
+    refs/heads/*)
+        branch=${branch#"refs/heads/"}
+        ;;
+    *)
+        echo "I can't figure out which branch you are on."
+        echo ""
+        echo "git symbolic-ref HEAD gives '${branch}', which does not begin with 'refs/heads/'."
+        exit 1
+        ;;
+esac
+
+remote_branch=$(git config --get "branch.${branch}.merge") || true
+if [ -z "${remote_branch}" ]; then
+    echo "There is no tracking information for the current branch."
+    echo "If you wish to set tracking information for this branch you can do so with:"
+    echo ""
+    echo "    git branch --set-upstream-to <remote>/<branch> ${branch}"
+    echo ""
+    exit 1
+fi
+
+if [[ "${branch}" =~ ^dev_.*$ ]] && ((!${force_dev_submit})); then
+    script_path=$(which readlink > /dev/null && readlink -f $0 || echo $0)
+    cat <<EOF
+Warning: Consider using the ${script_path%/*}/git-dev script for pushing
+    changes to and merges from a dev_* branch.
+    Use -f to override this check -or- set GIT_SUBMIT_ALLOW_DEV_BRANCH=1 in
+    the environment to permanently disable this check.
+
+EOF
+    exit 1
+fi
+
+git push ${remote} HEAD:refs/for/${remote_branch} ${push_options}

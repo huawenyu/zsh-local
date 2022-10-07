@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+
+case ":$FPATH:" in
+  *:"$1":*)
+    ;;
+  *)
+    FPATH="${FPATH:+$FPATH:}$1"
+esac
