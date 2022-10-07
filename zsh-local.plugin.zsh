@@ -26,6 +26,60 @@
 #
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
+[ -d $HOME/dotwiki/lib/python ] && { export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"; }
+[ -d $HOME/script/awk/awk-libs ] && { export AWKPATH=".:$HOME/script/awk/awk-libs:$AWKPATH"; }
+[ -d $HOME/script/awk ] && { export AWKPATH=".:$HOME/script/awk:$AWKPATH"; }
+[ -d $HOME/go ] && { export GOPATH=$HOME/go; }
+[ -d "/usr/lib/jvm/java-8-oracle" ] && { export JAVA_HOME="/usr/lib/jvm/java-8-oracle"; }
+# export JAVA_HOME="/usr/java/latest"
+
+## debug neovim python plugin:
+#export NVIM_PYTHON_LOG_FILE=/tmp/log
+#export NVIM_PYTHON_LOG_LEVEL=DEBUG
+[ -d $HOME/dotwiki/script/pretty-print ] && { export GDB_PRETTY_PRINT=$HOME/dotwiki/script/pretty-print; }
+
+# minicom line wrap: sudo -E minicom
+export MINICOM="-w"
+export RIPGREP_CONFIG_PATH=~/.ripgreprc
+export SSLKEYLOGFILE=~/sslkey.log
+
+#export JEMALLOC_PATH=$HOME/project/jemalloc
+#export MALLOC_CONF="prof:true,prof_prefix:jeprof.out"
+
+# batcat: sudo apt install bat
+export BAT_THEME="Monokai Extended"
+
+# The last path has highest priority, inserted in the front
+the_insert_paths=( \
+	"/snap/bin" \
+	"/bin" \
+	"/usr/bin" \
+	"/usr/sbin" \
+	"/usr/local/bin" \
+	"/usr/local/sbin" \
+	"/usr/.local/bin" \
+	"$HOME/.cargo/bin" \
+	"$HOME/perl5/bin" \
+	"$HOME/.linuxbrew/bin" \
+	"$HOME/.linuxbrew/sbin" \
+	"/home/linuxbrew/.linuxbrew/bin" \
+	"/home/linuxbrew/.linuxbrew/sbin" \
+	"$HOME/.local/bin" \
+	"$HOME/bin" \
+	"/opt/ActiveTcl-8.6/bin" \
+	"$HOME/script/git-scripts" \
+	"$HOME/script/python" \
+	"$HOME/script" \
+	"$HOME/generator" \
+	"$HOME/dotwiki/tool" \
+)
+
+# The first path has higher-priority, but the whole has low-priority then existed PATH
+the_append_paths=( \
+	"$GOPATH/bin" \
+	"/usr/lib64/qt-3.3/bin" \
+	"/usr/lib64/ccache" \
+)
 
 # Don't do this, will make tmux C-x=clear-screen not work.
 # - can't resolve the urxvt/window-terminal C-L make the screen blinking,
@@ -65,7 +119,6 @@ setopt histignorespace
 setopt no_hist_beep         # Don't beep
 setopt share_history        # Share history between session/terminals
 
-
 # color {{{2
 #   Black        0;30     Dark Gray     1;30
 #   Red          0;31     Light Red     1;31
@@ -93,7 +146,7 @@ function _Usage()
 #     indent with spaces will be left in.
 #     ${FUNCNAME[0]} not show current function name, but $0 works
 USAGE=$(cat <<-END
-	  dryrun: dryrun=1 Run ls -lart
+	  dryrun: dryrun=1 _do_cmd ls -lart
 	      tshare add user1
 	      tshare del user1
 	      ssh user1@work -t 'tmux -S /tmp/tmux_share attach -t share'
@@ -123,9 +176,9 @@ compdef _usage help
 alias help='_Usage'
 
 
-# function dry Run {{{3
-# dryrun="" Run ls -lart
-function Run()
+# function dry _do_cmd {{{3
+# dryrun="" _do_cmd ls -lart
+function _do_cmd()
 {
     if [ -v "dryrun" ]; then
         echo "[dryrun]:	$*"
@@ -138,114 +191,143 @@ function Run()
     fi
 }
 
+# https://stackoverflow.com/questions/62873982/linux-check-if-path-exists
+# Append our default paths
+# Usage: _path_append '/what_i_want_to_add'
+function _path_append()
+{
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="${PATH:+$PATH:}$1"
+    esac
+}
 
-# function HasCmd {{{3
-# Usage: if HasCmd boxes; then echo "has boxes"; else echo "nopes"; fi
-function HasCmd()
+# Insert our default paths
+# Usage: _path_insert '/what_i_want_to_insert'
+function _path_insert()
+{
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="$1:${PATH:+$PATH}"
+    esac
+}
+
+function _path_chk_dup()
+{
+    OLD_IFS=$IFS
+    IFS=:
+    NEWPATH=
+    unset EXISTS
+    declare -A EXISTS
+    for p in $PATH; do
+        #if [ -d $p ] && [ -z ${EXISTS[$p]} ]; then
+        # check dir exist cause error
+        if [ -z ${EXISTS[$p]} ]; then
+            NEWPATH=${NEWPATH:+$NEWPATH:}$p
+            EXISTS[$p]=yes
+        fi
+    done
+    IFS=$OLD_IFS
+    PATH=$NEWPATH
+}
+
+# function _has_cmd {{{3
+# Usage: if _has_cmd boxes; then echo "has boxes"; else echo "nopes"; fi
+function _has_cmd()
 {
     if [ ! -z ${1} ]; then
-        if ! command -v $1 &> /dev/null
-        then
+        if ! command -v $1 &> /dev/null; then
             # 1 = false
             return 1
-        else
-            # 0 = true
-            return 0
         fi
-    else
+        # 0 = true
+        return 0
+    fi
+    # 1 = false
+    return 1
+}
+
+# function _has_var {{{3
+# Usage: if _has_var $var; then echo "has var"; else echo "nopes"; fi
+function _has_var()
+{
+    if [ -z ${1+x} ]; then
         # 1 = false
         return 1
     fi
+    # 0 = true
+    return 0
 }
 
-# function Echo {{{3
+# function _do_echo {{{3
 # if [ -x boxes ]; then echo "exist"; else echo "not exist"; fi
-function Echo()
+function _do_echo()
 {
-    if HasCmd boxes; then
+    if _has_cmd boxes; then
         echo "$*" | boxes
     else
         echo "$*"
     fi
 }
 
-# function IsNum {{{3
+# function _is_num {{{3
 # https://stackoverflow.com/questions/5431909/returning-a-boolean-from-a-bash-function
-# Usage: if IsNum $1; then echo "is number"; else echo "nopes"; fi
-function IsNum()
+# Usage: if _is_num $1; then echo "is number"; else echo "nopes"; fi
+function _is_num()
 {
     if [ -n "$var" ] && [ "$var" -eq "$var" ] 2>/dev/null; then
         # 0 = true
         return 0
-    else
-        # 1 = false
-        return 1
     fi
+    # 1 = false
+    return 1
 }
 
-
-# function IsDir {{{3
-function IsDir()
-{
-    if [ -d "$1" ]
-    then
-        # 0 = true
-        return 0
-    else
-        # 1 = false
-        return 1
-    fi
-}
-
-
-# function HasVar {{{3
-# Usage: if HasVar $var; then echo "has var"; else echo "nopes"; fi
-function HasVar()
-{
-    if [ -z ${1+x} ]; then
-        # 1 = false
-        return 1
-    else
-        # 0 = true
-        return 0
-    fi
-}
 
 # Comtomize config {{{1
-# local encode info
+
+## Loading path {{{2}}}
+for a_path in "${the_insert_paths[@]}"; do
+	[ -d $a_path ] && {  _path_insert $a_path;  }
+done
+
+for a_path in "${the_append_paths[@]}"; do
+	[ -d $a_path ] && {  _path_append $a_path;  }
+done
+
+_path_chk_dup
+export PATH=${PATH}
+
+## Loading customize local bashrc {{{2}}}
 if [ -f "$HOME/.local/local" ]; then
     #echo "load local succ!"
     source $HOME/.local/local
 else
-    Echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
+    _do_echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
 fi
+
 
 # dev-var
 conf_fort=true
 # Also should set ftpsvr/sftpsvr in /etc/hosts
 conf_use_sftp=false
-if [ ! -v MYPATH_HEYTMUX ]; then
-    export MYPATH_HEYTMUX="$HOME/script/heytmux"
-fi
-
-if [ ! -v MYPATH_WORKREF ]; then
-    export MYPATH_WORKREF="$HOME/workref"
-fi
-if [ ! -v MYPATH_WORK ]; then
-    export MYPATH_WORK="$HOME/work"
-fi
-if [ ! -v MYPATH_WIKI ]; then
-	export MYPATH_WIKI="$HOME/work-doc"
-fi
+_has_var $MYPATH_HEYTMUX || { export MYPATH_HEYTMUX="$HOME/script/heytmux"; }
+_has_var $MYPATH_WORKREF || { export MYPATH_WORKREF="$HOME/workref"; }
+_has_var $MYPATH_WORK    || { export MYPATH_WORK="$HOME/work"; }
+_has_var $MYPATH_WIKI    || { export MYPATH_WIKI="$HOME/work-doc"; }
 
 # Cheat:
 # - Don't use the python version
 # - Install download the bin from https://github.com/cheat/cheat/releases
-if command -v cheat &> /dev/null; then
+if _has_cmd cheat; then
 	export CHEAT_CONFIG_PATH="$HOME/.cheat.yml"
 	# Using config to support multiple dirs
 	#export DEFAULT_CHEAT_DIR=$HOME/dotwiki/cheat
-	if command -v fzf &> /dev/null; then
+	if _has_cmd fzf; then
 		export CHEAT_USE_FZF=true
 	fi
 fi
@@ -262,9 +344,7 @@ alias pwd=" pwd | sed 's/^/ /g'"
 #alias pwd=' pwd -L'
 
 # sudo apt install -y tldr
-if command -v tldr &> /dev/null; then
-	alias h=tldr
-fi
+_has_cmd tldr && { alias m=tldr; }
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
@@ -273,18 +353,14 @@ fi
 #	echo "Install theFuck: pip3 install --user thefuck"
 #fi
 
-alias vimdiff="icdiff --line-numbers"
-alias dict="$HOME/tools/dict"
+_has_cmd icdiff && { alias vimdiff="icdiff --line-numbers"; }
+_has_cmd vimdiff || { alias vimdiff="nvim -d"; }
+
 alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
-#alias meld="nohup $HOME/tools/meld/bin/meld"
 alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
 
+_has_cmd icdiff && { alias vimdiff="icdiff --line-numbers"; }
 alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"
-
-#alias ls='ls -lart'
-if command -v tig &> /dev/null; then
-	alias ti='tig --all'
-fi
 
 alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
@@ -295,14 +371,11 @@ alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.;
 # Suppose we can define the DIRs in `~/.local/local`
 if [ -n ${MY_SYNC_LOCAL} ] && [ -n ${MY_SYNC_REMOTE} ]; then
 	for i in {1}; do
-		if command -v bsync &> /dev/null; then
-			if command -v rsync &> /dev/null; then
+		if _has_cmd rsync; then
+			if _has_cmd bsync; then
 				alias syncme="bsync -v -i ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
 				break
 			fi
-		fi
-
-		if command -v rsync &> /dev/null; then
 			alias sync-push="rsync -avrz --progress ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
 			alias sync-pull="rsync -avrz --progress ${MY_SYNC_REMOTE} ${MY_SYNC_LOCAL}"
 		fi
@@ -355,43 +428,43 @@ END
 
     if [ ${action} == "add" ]; then
         if [ ! -f "/bin/rbash" ]; then
-            Run sudo ln -s /bin/bash /bin/rbash
+            _do_cmd sudo ln -s /bin/bash /bin/rbash
         fi
-        Run cd /home
-        Run sudo mkdir -p ${userName}
-        Run sudo chmod 755 ${userName}
+        _do_cmd cd /home
+        _do_cmd sudo mkdir -p ${userName}
+        _do_cmd sudo chmod 755 ${userName}
 
-        Run sudo touch /home/$userName/share
-        Run sudo chmod 777 /home/$userName/share
+        _do_cmd sudo touch /home/$userName/share
+        _do_cmd sudo chmod 777 /home/$userName/share
         echo "tmux -S /tmp/tmux_${sesName} attach -t ${sesName}" > /home/$userName/share
 
-        #Run sudo useradd -s /bin/rbash -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
-        Run sudo useradd -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
+        #_do_cmd sudo useradd -s /bin/rbash -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
+        _do_cmd sudo useradd -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
 
         # create the 'share' session but not attach it.
-        Run tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
-        Run sudo chmod 777 /tmp/tmux_${sesName}
-        Run tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+        _do_cmd tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
+        _do_cmd sudo chmod 777 /tmp/tmux_${sesName}
+        _do_cmd tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
     elif [ ${action} == "del" ]; then
-        #Run sudo userdel -r ${userName}
-        Run tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
-        Run sudo killall -u ${userName}
-        Run sudo deluser --remove-home -f ${userName}
-        Run sudo rm -fr /tmp/tmux_${sesName}
+        #_do_cmd sudo userdel -r ${userName}
+        _do_cmd tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
+        _do_cmd sudo killall -u ${userName}
+        _do_cmd sudo deluser --remove-home -f ${userName}
+        _do_cmd sudo rm -fr /tmp/tmux_${sesName}
     fi
 };
 alias tshare='_task_share_screen'
 
-if command -v autossh &> /dev/null
-then
+if _has_cmd autossh; then
     alias swork="autossh hyu@work -t 'tmux attach -t work || tmux new -s work'"
-else
+elif _has_cmd ssh; then
     alias swork="ssh hyu@work -t 'tmux attach -t work || tmux new -s work'"
 fi
 
-alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
-alias mwork2="mosh hyu@work2 -- sh -c 'tmux attach -t work || tmux new -s work'"
-
+if _has_cmd mosh; then
+	alias mwork="mosh hyu@work -- sh -c 'tmux attach -t work || tmux new -s work'"
+	alias mwork2="mosh hyu@work2 -- sh -c 'tmux attach -t work || tmux new -s work'"
+fi
 
 # tmux layout manage {{{2
 # We also can use `heytmux` to do this job, pls remember change the window's name
@@ -420,7 +493,7 @@ END
     # @args:action
     if [ -z ${1} ]; then
         action='list'
-        Echo "${USAGE}"
+        _do_echo "${USAGE}"
         USAGE=''
     else
         action=$1
@@ -429,12 +502,12 @@ END
 
     # @args:layout
     if [ ${action} == "list" ]; then
-        Run cat /tmp/tmux.layout| cut -d "=" -f 1
+        _do_cmd cat /tmp/tmux.layout| cut -d "=" -f 1
         return 0
     elif [ ${action} == "del" ]; then
         nameWindow=$(tmux display-message -p '#W')
-        Run rm -fr ${MYPATH_WORK}/${nameWindow}
-        Run tmux kill-window -t "${nameWindow}"
+        _do_cmd rm -fr ${MYPATH_WORK}/${nameWindow}
+        _do_cmd tmux kill-window -t "${nameWindow}"
         return 0
     elif [ ${action} == "save" ] || [ ${action} == "set" ]; then
         if [ -z ${1} ]; then
@@ -446,9 +519,9 @@ END
     elif [ ${action} == "create" ]; then
         # @args: layout
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
+            _do_echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 create [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+            _do_echo "\t args: $0 create [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
             layout='default'
         else
             layout=$1
@@ -457,9 +530,9 @@ END
 
         # @args: nameWindow
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
+            _do_echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 create $layout ${RED}nameWindow${NC} bugNum"
+            _do_echo "\t args: $0 create $layout ${RED}nameWindow${NC} bugNum"
             nameWindow=$(tmux display-message -p '#W')
         else
             nameWindow=$1
@@ -468,24 +541,24 @@ END
 
         # @args: bugNum
         if [ -z ${1} ]; then
-            Echo "${USAGE}"
+            _do_echo "${USAGE}"
             USAGE=''
-            Echo "\t args: $0 create $layout $nameWindow [${RED}bugNum${NC}]"
+            _do_echo "\t args: $0 create $layout $nameWindow [${RED}bugNum${NC}]"
             bugNum=0
         else
             bugNum=$1
             shift
         fi
     else
-        # Echo "${USAGE}"
+        # _do_echo "${USAGE}"
         return 1
     fi
 
 
     # do-task
     if [ ${action} == "save" ]; then
-        Run tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
-        Run tlayout list
+        _do_cmd tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
+        _do_cmd tlayout list
         return 0
     elif [ ${action} == "set" ]; then
         # <nameLayout>='layoutString'
@@ -494,16 +567,16 @@ END
         eval layoutString='$'${layout}
         if [ ! -z ${layoutString+x} ]; then
             echo "Tmux-layout '${layout}': ${layoutString}"
-            Run tmux select-layout "'${layoutString}'"
+            _do_cmd tmux select-layout "'${layoutString}'"
             return 0
         fi
     elif [ ${action} == "create" ]; then
-        if HasCmd heytmux; then
+        if _has_cmd heytmux; then
             : #
         else
-            Echo "${USAGE}"
+            _do_echo "${USAGE}"
             USAGE=''
-            Echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
+            _do_echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
             return 1
         fi
 
@@ -522,10 +595,10 @@ END
                 if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
                     #indexWindow=$(tmux display-message -p '#I')
                     mkdir -p ${MYPATH_HEYTMUX}/${nameWindow}
-                    Run heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
-                    Run tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
+                    _do_cmd heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
+                    _do_cmd tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
                 else
-                    Echo "${USAGE}"
+                    _do_echo "${USAGE}"
                     USAGE=''
                     echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${MYPATH_HEYTMUX}'"
                     return 1
@@ -533,7 +606,7 @@ END
             fi
         } || { # catch
             # save log for exception
-            Echo "${USAGE}"
+            _do_echo "${USAGE}"
             USAGE=''
             echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
             echo "$0 save ${layout}"
@@ -541,24 +614,24 @@ END
         }
 
     elif [ ${layout} == "top" ]; then
-        Run tmux kill-pane -a
-        Run tmux split-window -v -p 80
-        Run tmux split-window -h -p 70 -t 1
-        Run tmux split-window -h -p 50
-        Run tmux select-pane -t 4
-        Run tmux send-keys "new-doc.sh" Space "${bugnumber}" Enter
-        #Run tmux send-keys 'echo music' 'Enter'
-        #Run tmux select-pane -t 2
+        _do_cmd tmux kill-pane -a
+        _do_cmd tmux split-window -v -p 80
+        _do_cmd tmux split-window -h -p 70 -t 1
+        _do_cmd tmux split-window -h -p 50
+        _do_cmd tmux select-pane -t 4
+        _do_cmd tmux send-keys "new-doc.sh" Space "${bugnumber}" Enter
+        #_do_cmd tmux send-keys 'echo music' 'Enter'
+        #_do_cmd tmux select-pane -t 2
     elif [ ${product} == "right" ]; then
-        Run tmux kill-pane -a
-        Run tmux split-window -v -p 80
-        Run tmux split-window -h -p 70 -t 1
-        Run tmux split-window -h -p 50
-        #Run tmux send-keys 'echo key' 'Enter'
-        #Run tmux send-keys 'echo music' 'Enter'
-        #Run tmux select-pane -t 2
+        _do_cmd tmux kill-pane -a
+        _do_cmd tmux split-window -v -p 80
+        _do_cmd tmux split-window -h -p 70 -t 1
+        _do_cmd tmux split-window -h -p 50
+        #_do_cmd tmux send-keys 'echo key' 'Enter'
+        #_do_cmd tmux send-keys 'echo music' 'Enter'
+        #_do_cmd tmux select-pane -t 2
     else
-        Echo "${USAGE}"
+        _do_echo "${USAGE}"
         USAGE=''
         echo "Support layouts: gen,cp; top,right"
     fi
@@ -599,8 +672,7 @@ function _task_preview()
     IN=$1
     mails=$(echo $IN | tr ":" "\n")
 
-    for addr in $mails
-    do
+    for addr in $mails; do
         if [ ! -v fname ]; then
             fname=$addr
         elif [ ! -v fline ]; then
@@ -633,7 +705,7 @@ END
     # @args:subdir
     if [ -z ${1} ]; then
         greptext=' '
-        Echo "${USAGE}"
+        _do_echo "${USAGE}"
     else
         subdir=$1
         if [ ${subdir} == "file" ]; then
@@ -662,7 +734,7 @@ END
 
     # echo "length=${#greptext}"
     # echo "rg -n${argExtra}L " "'"${greptext}"'" "$grepdir"
-    # Run rg -n${argExtra}L "'"${greptext}"'" $grepdir
+    # _do_cmd rg -n${argExtra}L "'"${greptext}"'" $grepdir
     # rg -nlL ' ' /home/hyu/doc | wc -l
     # rg -n${argExtra}L "'"${greptext}"'" $grepdir > /tmp/tmp_filelist
     #
@@ -678,7 +750,7 @@ END
                 | cut -d ':' -f 1,2 | xargs -r -o $EDITOR
         fi
     else
-        Run rg -n${argExtra}L "'"${greptext}"'" $grepdir
+        _do_cmd rg -n${argExtra}L "'"${greptext}"'" $grepdir
     fi
 };
 alias twiki='_task_wiki'
@@ -736,7 +808,7 @@ END
 
     # @args:buildnum
     if [ -z ${1} ]; then
-        Echo $USAGE
+        _do_echo $USAGE
         USAGE=''
         echo "no buildnum."
         return 1
@@ -747,7 +819,7 @@ END
 
     # @args:product
     if [ -z ${1} ]; then
-        Echo $USAGE
+        _do_echo $USAGE
         USAGE=''
         echo "no product."
         return 1
@@ -758,7 +830,7 @@ END
 
     # @args:model
     if [ -z ${1} ]; then
-        Echo $USAGE
+        _do_echo $USAGE
         USAGE=''
         product='ls'
         echo "no model, change product to 'ls'"
@@ -813,7 +885,7 @@ END
             get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz; \
             '"
     else
-        Echo $USAGE
+        _do_echo $USAGE
         USAGE=''
         return 1
     fi
@@ -905,7 +977,7 @@ alias tail='_mytail'
 # function prepare ftp {{{2
 function _my_pre_ftp()
 {
-    #if ! HasVar $LFTP_CMD; then
+    #if ! _has_var $LFTP_CMD; then
         if $conf_fort ; then
             if $conf_use_sftp ; then
                 ftpAddr=$(getent hosts sftpsvr | awk '{ print $1 }')
@@ -1035,37 +1107,41 @@ function _myftp()
 };
 alias ftpme='_myftp'
 
-
-# function _bear {{{2
-# used to generate the c/c++ ccls indexer db: ccls clang makefile
-function _bear()
-{
-
-    if [ -f compile_commands.json ]; then
-        ;
-    else
-		if [ -z ${branch+x} ]; then
-			branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+if _has_cmd bear; then
+	# function _bear {{{2
+	# used to generate the c/c++ ccls indexer db: ccls clang makefile
+	function _bear()
+	{
+		if [ -f compile_commands.json ]; then
+			;
+		else
+			if [ -z ${branch+x} ]; then
+				branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
+			fi
+			cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
 		fi
-        cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
-    fi
-    sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
-    #echo $sample_dir
-    cur_dir=$(realpath .)
-    #sed -i "s;$sample_dir;$cur_dir;g" compile_commands.json
-    Run "sed -i 's;$sample_dir;$cur_dir;g' compile_commands.json"
-};
-alias bearme='_bear'
+		sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
+		#echo $sample_dir
+		cur_dir=$(realpath .)
+		#sed -i "s;$sample_dir;$cur_dir;g" compile_commands.json
+		_do_cmd "sed -i 's;$sample_dir;$cur_dir;g' compile_commands.json"
+	};
+	alias bearme='_bear'
 
-# Wrap make(gcc) to generate compile_commands.json used by clangd-language-server
-#   sudo apt-get install -y clangd bear
-if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
-	alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so '
-elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
-	alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so -- '
+	# Wrap make(gcc) to generate compile_commands.json used by clangd-language-server
+	#   sudo apt-get install -y clangd bear
+	if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
+		alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so '
+	elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
+		alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so -- '
+	fi
 fi
 
-alias myclang='clang -fms-extensions -Wno-microsoft-anon-tag '
+
+if _has_cmd clang; then
+	alias myclang='clang -fms-extensions -Wno-microsoft-anon-tag '
+fi
+
 
 # Setup env vars {{{1
 #
@@ -1075,44 +1151,6 @@ alias myclang='clang -fms-extensions -Wno-microsoft-anon-tag '
 export TERM=screen-256color
 export EDITOR='vim'
 
-# ENV-PATH {{{2
-if [ -d "/usr/local/bin" ]; then
-  export PATH="/usr/local/bin:$PATH"
-fi
-
-if [ -d "/usr/.local/bin" ]; then
-  export PATH="/usr/.local/bin:$PATH"
-fi
-
-if [ -d "/snap/bin" ]; then
-  export PATH="/snap/bin:$PATH"
-fi
-
-if [ -d "/usr/bin" ]; then
-  export PATH="/usr/bin:$PATH"
-fi
-
-if [ -d "/bin" ]; then
-  export PATH="/bin:$PATH"
-fi
-
-if [ -d "/usr/local/sbin" ]; then
-  export PATH="/usr/local/sbin:$PATH"
-fi
-
-if [ -d "/usr/sbin" ]; then
-  export PATH="/usr/sbin:$PATH"
-fi
-
-if [ -d "$HOME/.local/bin" ]; then
-  export PATH="$HOME/.local/bin:$PATH"
-fi
-
-if [ -d "$HOME/bin" ]; then
-  export PATH="$HOME/bin:$PATH"
-fi
-
-
 export LIBVIRT_DEFAULT_URI="qemu:///system"
 export PERL_LOCAL_LIB_ROOT="$PERL_LOCAL_LIB_ROOT:$HOME/perl5";
 export PERL_MB_OPT="--install_base $HOME/perl5";
@@ -1120,13 +1158,9 @@ export PERL_MM_OPT="INSTALL_BASE=$HOME/perl5";
 export PERL5LIB="./lib:$HOME/perl5/lib:$PERL5LIB";
 alias  perldoctest='perl -MTest::Doctest -e run'
 
-export AWKPATH=".:$HOME/script/awk:$HOME/script/awk/awk-libs:$AWKPATH";
-
 # Python virtual env
-	export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"
-
 	# Silent direnv, thefuck
-	if command -v direnv &> /dev/null; then
+	if _has_cmd direnv; then
 		eval "$(direnv hook zsh)"
 	fi
 
@@ -1136,60 +1170,10 @@ export AWKPATH=".:$HOME/script/awk:$HOME/script/awk/awk-libs:$AWKPATH";
 	#   eval "$(pyenv init -)"
 	# fi
 
-	## debug neovim python plugin:
-	#export NVIM_PYTHON_LOG_FILE=/tmp/log
-	#export NVIM_PYTHON_LOG_LEVEL=DEBUG
-	export GDB_PRETTY_PRINT=$HOME/dotwiki/script/pretty-print
-
-# export JAVA_HOME="/usr/java/latest"
-export JAVA_HOME="/usr/lib/jvm/java-8-oracle"
-
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-
-if [ -d "/usr/lib64/qt-3.3/bin" ]; then
-  export PATH="/usr/lib64/qt-3.3/bin:$PATH"
-fi
-
-if [ -d "/usr/lib64/ccache" ]; then
-  export PATH="/usr/lib64/ccache:$PATH"
-fi
-
-if [ -d "/opt/ActiveTcl-8.6/bin" ]; then
-  export PATH="/opt/ActiveTcl-8.6/bin:$PATH"
-fi
-
-if [ -d "$HOME/.cargo/bin" ]; then
-  export PATH="$HOME/.cargo/bin:$PATH"
-fi
-
-if [ -d "$HOME/perl5/bin" ]; then
-  export PATH="$HOME/perl5/bin:$PATH"
-fi
-
-if [ -d "$HOME/.local/bin" ]; then
-  export PATH="$HOME/.local/bin:$PATH"
-fi
-
-if [ -d "$HOME/.linuxbrew/bin" ]; then
-  export PATH="$HOME/.linuxbrew/bin:$HOME/.linuxbrew/sbin:$PATH"
-elif [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
-  export PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
-fi
 
 #if [ -d "$HOME/..fzf_browser" ]; then
 #  export PATH=${PATH}:~/.fzf_browser
 #fi
-
-export PATH="$HOME/generator:$HOME/script:$HOME/script/git-scripts:$HOME/script/python:$HOME/dotwiki/tool:$PATH";
-#export CDPATH=.:$CDPATH
-
-# task, todos {{{2
-export TASKDDATA=/var/lib/taskd
-# todo.txt-cli
-export TODOTXT_DEFAULT_ACTION=ls
-#alias t='$HOME/tools/todo.txt-cli-ex/todo.sh -d $HOME/tools/todo.txt-cli-ex/todo.cfg'
-alias t='$HOME/tools/todo.txt-cli-ex/todo.sh'
 
 
 # used develop {{{2
@@ -1198,38 +1182,27 @@ if $conf_fort ; then
     export FORTIPKG=$HOME/fortipkg
 fi
 
-#export JEMALLOC_PATH=$HOME/project/jemalloc
-#export MALLOC_CONF="prof:true,prof_prefix:jeprof.out"
-
-# minicom line wrap: sudo -E minicom
-export MINICOM="-w"
-export RIPGREP_CONFIG_PATH=~/.ripgreprc
-export SSLKEYLOGFILE=~/sslkey.log
-
 # lang-Rust {{{2
 if hash rustc 2>/dev/null; then
     export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/
-    export PATH="$HOME/.cargo/bin:$PATH";
 fi
 
 # Disable warning messsage:
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
 
-# batcat: sudo apt install bat
-export BAT_THEME="Monokai Extended"
-
 # fzf {{{2
-if ! type "fzf" > /dev/null; then
+if ! _has_cmd fzf; then
 	if [ -f "$HOME/.fzf/bin/fzf" ]; then
 		mkdir -p "$HOME/bin"
 		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
 	fi
-else
+fi
 
+if _has_cmd fzf; then
 	# https://github.com/junegunn/fzf/issues/1625
 	#   fzf acts like an interactive filter. Default search program is find, but can be changed via FZF_DEFAULT_COMMAND
-	if type rg &> /dev/null; then
+	if _has_cmd rg; then
 		export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
 		# To apply the command to CTRL-T as well: avoid cd **<TAB>, vi **<TAB> fail
 		export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -1244,7 +1217,6 @@ else
 
 	# see zplugin-init.zsh with Turbo Mode
 	[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
 fi
 
 # Vi keybinding
@@ -1259,10 +1231,12 @@ fi
 # $ man ls
 #     fuse: mount failed: Permission denied
 #     Cannot mount AppImage, please check your FUSE setup.
-#export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
-#export MANPAGER="nvim -c 'set ft=man' -"
-export MANPAGER="nvim +Man!"
-export MANWIDTH=999
+if _has_cmd nvim; then
+	#export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
+	#export MANPAGER="nvim -c 'set ft=man' -"
+	export MANPAGER="nvim +Man!"
+	export MANWIDTH=999
+fi
 
 # Don't use nvimpager:
 # - can't support tmux-vim-jump
@@ -1272,7 +1246,6 @@ export MANWIDTH=999
 ##   git clone https://github.com/lucc/nvimpager.git
 ##   cd nvimpager && make PREFIX=$HOME/.local install
 ##export MANPAGER=nvimpager
-
 
 
 # tmux-zsh-environment.plugin
