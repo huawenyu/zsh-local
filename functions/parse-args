@@ -14,20 +14,55 @@
 #
 POSITIONAL_ARGS=()
 
+# set default value
+_ZT_ARGS_Verbose=false
+_ZT_ARGS_VerboseMore=true
+_ZT_ARGS_Default=false
+_ZT_ARGS_Dryrun=false
+_ZT_ARGS_Action='do'
+_ZT_ARGS_Mode='default'
+_ZT_ARGS_Silent=false
+
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -e|--extension)
-      EXTENSION="$2"
+    -v|--version)
+      _ZT_ARGS_Version="$2"
       shift # past argument
       shift # past value
       ;;
-    -s|--searchpath)
-      SEARCHPATH="$2"
+    -a|--action)
+      _ZT_ARGS_Action="$2"
       shift # past argument
       shift # past value
+      ;;
+    -m|--mode)
+      _ZT_ARGS_Mode="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -s|--message)
+      _ZT_ARGS_Msg="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -n|--dryrun)
+      _ZT_ARGS_Dryrun=true
+      shift # past argument
+      ;;
+    -i|--silent)
+      _ZT_ARGS_Silent=true
+      shift # past argument
+      ;;
+    -vv|-vvv)
+      _ZT_ARGS_VerboseMore=true
+      shift # past argument
+      ;;
+    -v|--verbose)
+      _ZT_ARGS_Verbose=true
+      shift # past argument, usage: if [ "$_ZT_ARGS_Verbose" = true ] ; then
       ;;
     --default)
-      DEFAULT=YES
+      _ZT_ARGS_Default=true
       shift # past argument
       ;;
     -*|--*)
@@ -42,10 +77,19 @@ while [[ $# -gt 0 ]]; do
 done
 
 #set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
-#
-#echo "FILE EXTENSION  = ${EXTENSION}"
-#echo "SEARCH PATH     = ${SEARCHPATH}"
-#echo "DEFAULT         = ${DEFAULT}"
+
+if [ "$_ZT_ARGS_VerboseMore" = true ] ; then
+    echo "_ZT_ARGS_Verbose     =${_ZT_ARGS_Verbose}"
+    echo "_ZT_ARGS_VerboseMore =${_ZT_ARGS_VerboseMore}"
+    echo "_ZT_ARGS_Default     =${_ZT_ARGS_Default}"
+    echo "_ZT_ARGS_Dryrun      =${_ZT_ARGS_Dryrun}"
+    echo "_ZT_ARGS_Action      =${_ZT_ARGS_Action}"
+    echo "_ZT_ARGS_Mode        =${_ZT_ARGS_Mode}"
+    echo "_ZT_ARGS_Silent      =${_ZT_ARGS_Silent}"
+
+    echo "Usage: -v verbose, -vv dump, -a action, -m mode, -s message -n dryrun, -i silent"
+fi
+
 #echo "Number files in SEARCH PATH with EXTENSION:" $(ls -1 "${SEARCHPATH}"/*."${EXTENSION}" | wc -l)
 #
 #if [[ -n $1 ]]; then
