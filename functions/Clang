@@ -1,0 +1,10 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+if ! is-callable clang; then
+    echo "[plugin:zsh-local] No command `clang`, install: sudo apt-get install -y clang"
+    return 1
+fi
+
+clang -fms-extensions -Wno-microsoft-anon-tag  "$@"
+

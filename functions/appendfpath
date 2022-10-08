@@ -1,4 +1,7 @@
 #!/usr/bin/env zsh
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
 
 case ":$FPATH:" in
   *:"$1":*)

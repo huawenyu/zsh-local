@@ -1,0 +1,22 @@
+#!/usr/bin/env zsh
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# https://stackoverflow.com/questions/62873982/linux-check-if-path-exists
+#
+OLD_IFS=$IFS
+IFS=:
+NEWPATH=
+unset EXISTS
+declare -A EXISTS
+for p in $PATH; do
+    #if [ -d $p ] && [ -z ${EXISTS[$p]} ]; then
+    # check dir exist cause error
+    if [ -z ${EXISTS[$p]} ]; then
+        NEWPATH=${NEWPATH:+$NEWPATH:}$p
+        EXISTS[$p]=yes
+    fi
+done
+IFS=$OLD_IFS
+PATH=$NEWPATH
+

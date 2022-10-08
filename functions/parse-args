@@ -15,33 +15,75 @@
 POSITIONAL_ARGS=()
 
 # set default value
+_ZT_ARGS_Usage=false
 _ZT_ARGS_Verbose=false
-_ZT_ARGS_VerboseMore=true
+_ZT_ARGS_VerboseMore=false
+_ZT_ARGS_Version=false
 _ZT_ARGS_Default=false
 _ZT_ARGS_Dryrun=false
-_ZT_ARGS_Action='do'
-_ZT_ARGS_Mode='default'
+_ZT_ARGS_Action='default'
 _ZT_ARGS_Silent=false
+_ZT_ARGS_Msg="none"
+_ZT_ARGS_Src=""     # src-file/src-dir/from-Addr 192.168.122.10
+_ZT_ARGS_Dst=""     # dst-file/dst-dir/to-Addr 192.168.122.10
+_ZT_ARGS_Host=""    # IP-Addr 192.168.122.10
+_ZT_ARGS_Port=""    # Host.port
+_ZT_ARGS_Local=""   # Listen on local: 0.0.0.0:8080
+_ZT_ARGS_ProxyPort=""   # 192.168.122.10:8080
+_ZT_ARGS_UserPwd=""     # user123:password123
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -v|--version)
-      _ZT_ARGS_Version="$2"
+    -h|--help)
+      _ZT_ARGS_Usage=true
+      shift # past argument, usage: if [ "$_ZT_ARGS_Verbose" = true ] ; then
+      ;;
+    -V|--version)
+      _ZT_ARGS_Version=true
       shift # past argument
-      shift # past value
       ;;
     -a|--action)
       _ZT_ARGS_Action="$2"
       shift # past argument
       shift # past value
       ;;
-    -m|--mode)
-      _ZT_ARGS_Mode="$2"
+    -m|--message)
+      _ZT_ARGS_Msg="$2"
       shift # past argument
       shift # past value
       ;;
-    -s|--message)
-      _ZT_ARGS_Msg="$2"
+    -s|--src)
+      _ZT_ARGS_Src="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -d|--dst)
+      _ZT_ARGS_Dst="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -H|--host)
+      _ZT_ARGS_Host="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -p|--port)
+      _ZT_ARGS_Port="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -l|--local)
+      _ZT_ARGS_Local="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -x|--proxy)
+      _ZT_ARGS_ProxyPort="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -u|--user)
+      _ZT_ARGS_UserPwd="$2"
       shift # past argument
       shift # past value
       ;;
@@ -78,16 +120,31 @@ done
 
 #set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 
-if [ "$_ZT_ARGS_VerboseMore" = true ] ; then
-    echo "_ZT_ARGS_Verbose     =${_ZT_ARGS_Verbose}"
-    echo "_ZT_ARGS_VerboseMore =${_ZT_ARGS_VerboseMore}"
-    echo "_ZT_ARGS_Default     =${_ZT_ARGS_Default}"
-    echo "_ZT_ARGS_Dryrun      =${_ZT_ARGS_Dryrun}"
-    echo "_ZT_ARGS_Action      =${_ZT_ARGS_Action}"
-    echo "_ZT_ARGS_Mode        =${_ZT_ARGS_Mode}"
-    echo "_ZT_ARGS_Silent      =${_ZT_ARGS_Silent}"
+if [ "$_ZT_ARGS_VerboseMore" = true ] || [ "$_ZT_ARGS_Usage" = true ] ; then
+    echo "  Usage: -h help/usage, -v verbose, -vv dump-args, -V version"
+    echo "         -a action, -m message -n dryrun, -i silent"
+    echo "         -s src, -d dst, -p port, -h host, -x proxy, -u UserPwd"
 
-    echo "Usage: -v verbose, -vv dump, -a action, -m mode, -s message -n dryrun, -i silent"
+    echo "    _ZT_ARGS_Usage       = ${_ZT_ARGS_Usage}"
+    echo "    _ZT_ARGS_Version     = ${_ZT_ARGS_Version}"
+    echo "    _ZT_ARGS_Verbose     = ${_ZT_ARGS_Verbose}"
+    echo "    _ZT_ARGS_VerboseMore = ${_ZT_ARGS_VerboseMore}"
+    echo "    _ZT_ARGS_Default     = ${_ZT_ARGS_Default}"
+    echo "    _ZT_ARGS_Dryrun      = ${_ZT_ARGS_Dryrun}"
+    echo "    _ZT_ARGS_Action      = ${_ZT_ARGS_Action}"
+    echo "    _ZT_ARGS_Silent      = ${_ZT_ARGS_Silent}"
+    echo "    _ZT_ARGS_Msg         = ${_ZT_ARGS_Msg}"
+    echo "    _ZT_ARGS_Src         = ${_ZT_ARGS_Src}"
+    echo "    _ZT_ARGS_Dst         = ${_ZT_ARGS_Dst}"
+    echo "    _ZT_ARGS_Host        = ${_ZT_ARGS_Host}"
+    echo "    _ZT_ARGS_Port        = ${_ZT_ARGS_Port}"
+    echo "    _ZT_ARGS_Local       = ${_ZT_ARGS_Local}"
+    echo "    _ZT_ARGS_ProxyPort   = ${_ZT_ARGS_ProxyPort}"
+    echo "    _ZT_ARGS_UserPwd     = ${_ZT_ARGS_UserPwd}"
+fi
+
+if [ "$_ZT_ARGS_Usage" = true ] ; then
+    return 1
 fi
 
 #echo "Number files in SEARCH PATH with EXTENSION:" $(ls -1 "${SEARCHPATH}"/*."${EXTENSION}" | wc -l)

@@ -14,6 +14,7 @@ else
 	fi
 	cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
 fi
+
 sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
 #echo $sample_dir
 cur_dir=$(realpath .)

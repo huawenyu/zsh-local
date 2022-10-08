@@ -1,0 +1,45 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+if ! parse-args "$@" ; then
+    echo "----------end--------------"
+    return
+fi
+
+if ! is-callable rsync; then
+    echo "[plugin:zsh-local] No command 'rsync': sudo apt install rsync"
+    return 1
+fi
+if ! is-callable bsync; then
+    echo "[plugin:zsh-local] Better substitute 'bsync': https://github.com/dooblem/bsync"
+fi
+
+# https://github.com/dooblem/bsync
+# Suppose we can define the DIRs in `~/.local/local`
+if ! chk-var ${_ZT_ARGS_Src} ; then
+    if chk-var ${MY_SYNC_LOCAL} ; then
+        _ZT_ARGS_Src="${MY_SYNC_LOCAL}"
+    fi
+fi
+
+if ! chk-var ${_ZT_ARGS_Dst} ; then
+    if chk-var ${MY_SYNC_REMOTE} ; then
+        _ZT_ARGS_Dst="${MY_SYNC_REMOTE}"
+    fi
+fi
+
+if ! chk-var ${_ZT_ARGS_Src} ; then
+    echo "[plugin:zsh-local] Arguments Error - no src-dir: syncme -s dir1 -d dir2"
+    return
+fi
+if ! chk-var ${_ZT_ARGS_Dst} ; then
+    echo "[plugin:zsh-local] Arguments Error - no dst-dir: syncme -s dir1 -d dir2"
+    return
+fi
+
+if is-callable bsync; then
+    bsync -v -i ${_ZT_ARGS_Src}  ${_ZT_ARGS_Dst}
+else
+    rsync -avrz --progress ${_ZT_ARGS_Src}  ${_ZT_ARGS_Dst}
+fi
+

@@ -1,0 +1,18 @@
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+if ! is-callable bear; then
+    echo "[plugin:zsh-local] No command `bear`, install: sudo apt-get install -y clangd bear"
+    return
+fi
+
+# Wrap make(gcc) to generate compile_commands.json used by clangd-language-server
+#   sudo apt-get install -y clangd bear
+if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
+	bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so "$@"
+elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
+	bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so -- "$@"
+else
+	"$@"
+fi
+

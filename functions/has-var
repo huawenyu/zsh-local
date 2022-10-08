@@ -5,8 +5,8 @@
 #   if [ -z "$var" ]; then echo "var is blank"; else echo "var is set to '$var'"; fi
 #   if [ -z ${var+x} ]; then echo "var is unset"; else echo "var is set to '$var'"; fi
 #
-# Usage: if chk-var $var; then echo "has var"; else echo "nopes"; fi
-if [ -z ${1} ]; then
+# Usage: if has-var $var; then echo "has var"; else echo "nopes"; fi
+if [ -z ${1+x} ]; then
     # 1 = false
     return 1
 fi

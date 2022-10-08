@@ -3,7 +3,6 @@
 #
 # pair-programer: share terminal screen {{{2
 # @param action=add|del username
-function t-share() {
 USAGE=$(cat <<-END
 	  server:
 	      $0 add|del user1 ses_name
@@ -14,60 +13,59 @@ USAGE=$(cat <<-END
 END
 )
 
-    if [ -z ${1} ]; then
-        echo "${USAGE}"
-        return 1
-    else
-        action=${1}
-
-        if [ ${action} == "add" ]; then
-            # donothing
-            :
-        elif [ ${action} == "del" ]; then
-            :
-        else
-            echo "${USAGE}"
-            return 1
-        fi
-    fi
-
-    if [ -z ${2} ]; then
-        userName="guest"
-    else
-        userName=${2}
-    fi
-
-    if [ -z ${3} ]; then
-        sesName="share"
-    else
-        sesName=${3}
-    fi
+if [ -z ${1} ]; then
+    echo "${USAGE}"
+    return 1
+else
+    action=${1}
 
     if [ ${action} == "add" ]; then
-        if [ ! -f "/bin/rbash" ]; then
-            do-cmd sudo ln -s /bin/bash /bin/rbash
-        fi
-        do-cmd cd /home
-        do-cmd sudo mkdir -p ${userName}
-        do-cmd sudo chmod 755 ${userName}
-
-        do-cmd sudo touch /home/$userName/share
-        do-cmd sudo chmod 777 /home/$userName/share
-        echo "tmux -S /tmp/tmux_${sesName} attach -t ${sesName}" > /home/$userName/share
-
-        #do-cmd sudo useradd -s /bin/rbash -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
-        do-cmd sudo useradd -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
-
-        # create the 'share' session but not attach it.
-        do-cmd tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
-        do-cmd sudo chmod 777 /tmp/tmux_${sesName}
-        do-cmd tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+        # donothing
+        :
     elif [ ${action} == "del" ]; then
-        #do-cmd sudo userdel -r ${userName}
-        do-cmd tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
-        do-cmd sudo killall -u ${userName}
-        do-cmd sudo deluser --remove-home -f ${userName}
-        do-cmd sudo rm -fr /tmp/tmux_${sesName}
+        :
+    else
+        echo "${USAGE}"
+        return 1
     fi
-};
+fi
+
+if [ -z ${2} ]; then
+    userName="guest"
+else
+    userName=${2}
+fi
+
+if [ -z ${3} ]; then
+    sesName="share"
+else
+    sesName=${3}
+fi
+
+if [ ${action} == "add" ]; then
+    if [ ! -f "/bin/rbash" ]; then
+        do-cmd sudo ln -s /bin/bash /bin/rbash
+    fi
+    do-cmd cd /home
+    do-cmd sudo mkdir -p ${userName}
+    do-cmd sudo chmod 755 ${userName}
+
+    do-cmd sudo touch /home/$userName/share
+    do-cmd sudo chmod 777 /home/$userName/share
+    echo "tmux -S /tmp/tmux_${sesName} attach -t ${sesName}" > /home/$userName/share
+
+    #do-cmd sudo useradd -s /bin/rbash -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
+    do-cmd sudo useradd -d /home/$userName -p $(openssl passwd -crypt $userName) $userName
+
+    # create the 'share' session but not attach it.
+    do-cmd tmux -S /tmp/tmux_${sesName} new -d -s ${sesName}
+    do-cmd sudo chmod 777 /tmp/tmux_${sesName}
+    do-cmd tmux -S /tmp/tmux_${sesName} attach -t ${sesName}
+elif [ ${action} == "del" ]; then
+    #do-cmd sudo userdel -r ${userName}
+    do-cmd tmux -S /tmp/tmux_${sesName} kill -t ${sesName}
+    do-cmd sudo killall -u ${userName}
+    do-cmd sudo deluser --remove-home -f ${userName}
+    do-cmd sudo rm -fr /tmp/tmux_${sesName}
+fi
 

@@ -7,10 +7,9 @@
 #    Nested-tmux by another sock-name: tmux -L child -f ~/.tmux.conf.child
 #    Kill them:                        tmux -L child kill-session
 # @param mode[top|side] #bugnumber 'bug-summary'
-function t-layout() {
 #     ${FUNCNAME[0]} not show current function name, but $0 works
 #	  $0 gen|cp|top|side,default=cp 0123456 "summary block traffic under proxy"
-cmd="tlayout"
+cmd="t-layout"
 USAGE=$(cat <<-END
 	  $cmd alias "$0"
 	  Sample:
@@ -23,152 +22,150 @@ USAGE=$(cat <<-END
 END
 )
 
-    usage=0
-    # @args:action
+usage=0
+# @args:action
+if [ -z ${1} ]; then
+    action='list'
+    do-echo "${USAGE}"
+    USAGE=''
+else
+    action=$1
+    shift
+fi
+
+# @args:layout
+if [ ${action} == "list" ]; then
+    do-cmd cat /tmp/tmux.layout| cut -d "=" -f 1
+    return 0
+elif [ ${action} == "del" ]; then
+    nameWindow=$(tmux display-message -p '#W')
+    do-cmd rm -fr ${MYPATH_WORK}/${nameWindow}
+    do-cmd tmux kill-window -t "${nameWindow}"
+    return 0
+elif [ ${action} == "save" ] || [ ${action} == "set" ]; then
     if [ -z ${1} ]; then
-        action='list'
+        layout='default'
+    else
+        layout=$1
+        shift
+    fi
+elif [ ${action} == "create" ]; then
+    # @args: layout
+    if [ -z ${1} ]; then
         do-echo "${USAGE}"
         USAGE=''
+        do-echo "\t args: $0 create [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
+        layout='default'
     else
-        action=$1
+        layout=$1
         shift
     fi
 
-    # @args:layout
-    if [ ${action} == "list" ]; then
-        do-cmd cat /tmp/tmux.layout| cut -d "=" -f 1
-        return 0
-    elif [ ${action} == "del" ]; then
+    # @args: nameWindow
+    if [ -z ${1} ]; then
+        do-echo "${USAGE}"
+        USAGE=''
+        do-echo "\t args: $0 create $layout ${RED}nameWindow${NC} bugNum"
         nameWindow=$(tmux display-message -p '#W')
-        do-cmd rm -fr ${MYPATH_WORK}/${nameWindow}
-        do-cmd tmux kill-window -t "${nameWindow}"
-        return 0
-    elif [ ${action} == "save" ] || [ ${action} == "set" ]; then
-        if [ -z ${1} ]; then
-            layout='default'
-        else
-            layout=$1
-            shift
-        fi
-    elif [ ${action} == "create" ]; then
-        # @args: layout
-        if [ -z ${1} ]; then
-            do-echo "${USAGE}"
-            USAGE=''
-            do-echo "\t args: $0 create [${RED}nameLayout${NC}] [nameWindow] [bugNum]"
-            layout='default'
-        else
-            layout=$1
-            shift
-        fi
-
-        # @args: nameWindow
-        if [ -z ${1} ]; then
-            do-echo "${USAGE}"
-            USAGE=''
-            do-echo "\t args: $0 create $layout ${RED}nameWindow${NC} bugNum"
-            nameWindow=$(tmux display-message -p '#W')
-        else
-            nameWindow=$1
-            shift
-        fi
-
-        # @args: bugNum
-        if [ -z ${1} ]; then
-            do-echo "${USAGE}"
-            USAGE=''
-            do-echo "\t args: $0 create $layout $nameWindow [${RED}bugNum${NC}]"
-            bugNum=0
-        else
-            bugNum=$1
-            shift
-        fi
     else
-        # do-echo "${USAGE}"
+        nameWindow=$1
+        shift
+    fi
+
+    # @args: bugNum
+    if [ -z ${1} ]; then
+        do-echo "${USAGE}"
+        USAGE=''
+        do-echo "\t args: $0 create $layout $nameWindow [${RED}bugNum${NC}]"
+        bugNum=0
+    else
+        bugNum=$1
+        shift
+    fi
+else
+    # do-echo "${USAGE}"
+    return 1
+fi
+
+
+# do-task
+if [ ${action} == "save" ]; then
+    do-cmd tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
+    do-cmd tlayout list
+    return 0
+elif [ ${action} == "set" ]; then
+    # <nameLayout>='layoutString'
+    source /tmp/tmux.layout
+
+    eval layoutString='$'${layout}
+    if [ ! -z ${layoutString+x} ]; then
+        echo "Tmux-layout '${layout}': ${layoutString}"
+        do-cmd tmux select-layout "'${layoutString}'"
+        return 0
+    fi
+elif [ ${action} == "create" ]; then
+    if is-callable heytmux; then
+        : #
+    else
+        do-echo "${USAGE}"
+        USAGE=''
+        do-echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
         return 1
     fi
 
+    # <nameLayout>='layoutString'
+    source /tmp/tmux.layout
 
-    # do-task
-    if [ ${action} == "save" ]; then
-        do-cmd tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
-        do-cmd tlayout list
-        return 0
-    elif [ ${action} == "set" ]; then
-        # <nameLayout>='layoutString'
-        source /tmp/tmux.layout
+    { # try
+
+        #command1 &&
+        ##save your output
 
         eval layoutString='$'${layout}
         if [ ! -z ${layoutString+x} ]; then
             echo "Tmux-layout '${layout}': ${layoutString}"
-            do-cmd tmux select-layout "'${layoutString}'"
-            return 0
-        fi
-    elif [ ${action} == "create" ]; then
-        if is-callable heytmux; then
-            : #
-        else
-            do-echo "${USAGE}"
-            USAGE=''
-            do-echo -e "According https://github.com/junegunn/heytmux \n Install: gem install heytmux" | boxes
-            return 1
-        fi
 
-        # <nameLayout>='layoutString'
-        source /tmp/tmux.layout
-
-        { # try
-
-            #command1 &&
-            ##save your output
-
-            eval layoutString='$'${layout}
-            if [ ! -z ${layoutString+x} ]; then
-                echo "Tmux-layout '${layout}': ${layoutString}"
-
-                if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
-                    #indexWindow=$(tmux display-message -p '#I')
-                    mkdir -p ${MYPATH_HEYTMUX}/${nameWindow}
-                    do-cmd heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
-                    do-cmd tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
-                else
-                    do-echo "${USAGE}"
-                    USAGE=''
-                    echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${MYPATH_HEYTMUX}'"
-                    return 1
-                fi
+            if [ -f "${MYPATH_HEYTMUX}/${layout}.yml" ]; then
+                #indexWindow=$(tmux display-message -p '#I')
+                mkdir -p ${MYPATH_HEYTMUX}/${nameWindow}
+                do-cmd heyWindow=${nameWindow} heyBug=${bugNum} heytmux "${MYPATH_HEYTMUX}/${layout}.yml"
+                do-cmd tmux select-layout -t   "'${nameWindow}'"   "'${layoutString}'"
+            else
+                do-echo "${USAGE}"
+                USAGE=''
+                echo "[$me] Please create heytmux layout file ${RED}'${layout}.yml'${NC} into '${MYPATH_HEYTMUX}'"
+                return 1
             fi
-        } || { # catch
-            # save log for exception
-            do-echo "${USAGE}"
-            USAGE=''
-            echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
-            echo "$0 save ${layout}"
-            return 1
-        }
-
-    elif [ ${layout} == "top" ]; then
-        do-cmd tmux kill-pane -a
-        do-cmd tmux split-window -v -p 80
-        do-cmd tmux split-window -h -p 70 -t 1
-        do-cmd tmux split-window -h -p 50
-        do-cmd tmux select-pane -t 4
-        do-cmd tmux send-keys "new-doc.sh" Space "${bugnumber}" Enter
-        #do-cmd tmux send-keys 'echo music' 'Enter'
-        #do-cmd tmux select-pane -t 2
-    elif [ ${product} == "right" ]; then
-        do-cmd tmux kill-pane -a
-        do-cmd tmux split-window -v -p 80
-        do-cmd tmux split-window -h -p 70 -t 1
-        do-cmd tmux split-window -h -p 50
-        #do-cmd tmux send-keys 'echo key' 'Enter'
-        #do-cmd tmux send-keys 'echo music' 'Enter'
-        #do-cmd tmux select-pane -t 2
-    else
+        fi
+    } || { # catch
+        # save log for exception
         do-echo "${USAGE}"
         USAGE=''
-        echo "Support layouts: gen,cp; top,right"
-    fi
-    return 0
-};
+        echo "[$me] Please create the layout ${RED}'${layout}'${NC} into /tmp/tmux.layout:"
+        echo "$0 save ${layout}"
+        return 1
+    }
+
+elif [ ${layout} == "top" ]; then
+    do-cmd tmux kill-pane -a
+    do-cmd tmux split-window -v -p 80
+    do-cmd tmux split-window -h -p 70 -t 1
+    do-cmd tmux split-window -h -p 50
+    do-cmd tmux select-pane -t 4
+    do-cmd tmux send-keys "new-doc.sh" Space "${bugnumber}" Enter
+    #do-cmd tmux send-keys 'echo music' 'Enter'
+    #do-cmd tmux select-pane -t 2
+elif [ ${product} == "right" ]; then
+    do-cmd tmux kill-pane -a
+    do-cmd tmux split-window -v -p 80
+    do-cmd tmux split-window -h -p 70 -t 1
+    do-cmd tmux split-window -h -p 50
+    #do-cmd tmux send-keys 'echo key' 'Enter'
+    #do-cmd tmux send-keys 'echo music' 'Enter'
+    #do-cmd tmux select-pane -t 2
+else
+    do-echo "${USAGE}"
+    USAGE=''
+    echo "Support layouts: gen,cp; top,right"
+fi
 

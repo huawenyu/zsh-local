@@ -49,14 +49,37 @@ the_append_paths=( \
 ## bindkey -r "^L"
 
 # Plugin define functions and zsh-completion
+# avoid duplicate append
 if [[ $PMSPEC != *f* ]]; then
-  fpath+=( "${0:h}/functions" )
+    tmp=( "${0:h}/functions" )
+    case ":$FPATH:" in
+      *:"$tmp":*)
+        ;;
+      *)
+        fpath+=$tmp
+    esac
 fi
+
+# auto load all functions
 autoload -Uz "${0:h}/functions"/*(.:t)
 
+# avoid duplicate append
 if [[ $PMSPEC != *b* ]]; then
-  path+=( "${0:h}/bin" )
-  path+=( "${0:h}/bingit" )
+    tmp=( "${0:h}/bin" )
+    case ":$PATH:" in
+      *:"$tmp":*)
+        ;;
+      *)
+        path+=$tmp
+    esac
+
+    tmp=( "${0:h}/bingit" )
+    case ":$PATH:" in
+      *:"$tmp":*)
+        ;;
+      *)
+        path+=$tmp
+    esac
 fi
 
 export LANG=en_US.UTF-8
@@ -129,26 +152,6 @@ export BAT_THEME="Monokai Extended"
 #
 # https://mrigank11.github.io/2018/03/zsh-auto-completion/
 
-function path-chk-dup()
-{
-    OLD_IFS=$IFS
-    IFS=:
-    NEWPATH=
-    unset EXISTS
-    declare -A EXISTS
-    for p in $PATH; do
-        #if [ -d $p ] && [ -z ${EXISTS[$p]} ]; then
-        # check dir exist cause error
-        if [ -z ${EXISTS[$p]} ]; then
-            NEWPATH=${NEWPATH:+$NEWPATH:}$p
-            EXISTS[$p]=yes
-        fi
-    done
-    IFS=$OLD_IFS
-    PATH=$NEWPATH
-}
-
-
 # Comtomize config {{{1
 ## Loading path {{{2}}}
 for a_path in "${the_insert_paths[@]}"; do
@@ -187,7 +190,7 @@ if is-callable cheat; then
 	export CHEAT_CONFIG_PATH="$HOME/.cheat.yml"
 	# Using config to support multiple dirs
 	#export DEFAULT_CHEAT_DIR=$HOME/dotwiki/cheat
-	if chk-cmd fzf; then
+	if is-callable fzf; then
 		export CHEAT_USE_FZF=true
 	fi
 fi
@@ -227,21 +230,6 @@ alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.;
 # fake sudo vim ~/root/etc/hosts
 #    ln -s /drives/c/Windows/System32/drivers/ ./root
 
-# https://github.com/dooblem/bsync
-# Suppose we can define the DIRs in `~/.local/local`
-if [ -n ${MY_SYNC_LOCAL} ] && [ -n ${MY_SYNC_REMOTE} ]; then
-	for i in {1}; do
-		if is-callable rsync; then
-			if is-callable bsync; then
-				alias syncme="bsync -v -i ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
-				break
-			fi
-			alias sync-push="rsync -avrz --progress ${MY_SYNC_LOCAL}  ${MY_SYNC_REMOTE}"
-			alias sync-pull="rsync -avrz --progress ${MY_SYNC_REMOTE} ${MY_SYNC_LOCAL}"
-		fi
-	done
-fi
-
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
@@ -267,17 +255,6 @@ unsetopt correct_all
 unsetopt nomatch
 
 
-if is-callable bear; then
-	# Wrap make(gcc) to generate compile_commands.json used by clangd-language-server
-	#   sudo apt-get install -y clangd bear
-	if [ -f '/usr/lib/x86_64-linux-gnu/bear/libear.so' ]; then
-		alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so '
-	elif [ -f '/usr/local/lib/x86_64-linux-gnu/bear/libexec.so' ]; then
-		alias Bear='bear -l /usr/lib/x86_64-linux-gnu/bear/libear.so -- '
-	fi
-fi
-
-is-callable clang && { alias myclang='clang -fms-extensions -Wno-microsoft-anon-tag '; }
 is-callable direnv && { eval "$(direnv hook zsh)"; }
 is-callable rustc && { export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/; }
 
