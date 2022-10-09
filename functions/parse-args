@@ -124,7 +124,7 @@ if [ "$_ZT_ARGS_VerboseMore" = true ] || [ "$_ZT_ARGS_Usage" = true ] ; then
     echo "  Usage: -h help/usage, -v verbose, -vv dump-args, -V version"
     echo "         -a action, -m message -n dryrun, -i silent"
     echo "         -s src, -d dst, -p port, -h host, -x proxy, -u UserPwd"
-
+    echo ""
     echo "    _ZT_ARGS_Usage       = ${_ZT_ARGS_Usage}"
     echo "    _ZT_ARGS_Version     = ${_ZT_ARGS_Version}"
     echo "    _ZT_ARGS_Verbose     = ${_ZT_ARGS_Verbose}"
@@ -141,6 +141,55 @@ if [ "$_ZT_ARGS_VerboseMore" = true ] || [ "$_ZT_ARGS_Usage" = true ] ; then
     echo "    _ZT_ARGS_Local       = ${_ZT_ARGS_Local}"
     echo "    _ZT_ARGS_ProxyPort   = ${_ZT_ARGS_ProxyPort}"
     echo "    _ZT_ARGS_UserPwd     = ${_ZT_ARGS_UserPwd}"
+    echo ""
+    echo "  See Also: ftp-*, smb-*, t-*, t-work, tagme, syncme, chk-*, chk-ubuntu, Bear, bear-me"
+├── appendfpath
+├── appendpath
+├── Bear
+├── bear-me
+├── chk-num
+├── chk-os-is
+├── chk-var
+├── Clang
+├── debug
+├── do-cmd
+├── do-echo
+├── fpath
+├── ftp-get
+├── ftp-ls
+├── ftp-me
+├── ftp-mirror
+├── ftp-prepare
+├── ftp-put
+├── ftp-rm
+├── has-var
+├── _hello
+├── hyperlink
+├── hyperlink-file
+├── hyperlink-file-pr
+├── hyperlink-pr
+├── insertpath
+├── is-callable
+├── is-recursive-exist
+├── is-true
+├── p
+├── parse-args
+├── path
+├── path-chk-dup
+├── prependfpath
+├── prependpath
+├── smb-get
+├── smb-login
+├── smb-me
+├── syncme
+├── tail
+├── t-doc
+├── t-layout
+├── t-preview
+├── _traceme-py
+├── t-share
+├── t-wiki
+└── t-work
 fi
 
 if [ "$_ZT_ARGS_Usage" = true ] ; then
