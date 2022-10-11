@@ -5,108 +5,79 @@
 # add user/pass to: ~/.smbclient.conf
 # disable log in /etc/samba/smb.conf
 #      syslog = 0
-# @param model buildnum product
+#
+# Sample input:
+#   Version: FortiProxy-KVM v7.0.0,build0082,220527 (Interim)
+#   Version: FortiGate-VM64-KVM v7.2.1,build1220,220615 (Interim)
+#   Log: firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)
+#
 USAGE=$(cat <<-END
-	  $0 buildnum (fos6|fos701|fpx|ls) model
 	  Sample:
-	    smbget 1561 ls
-
-	    smbget 1561 fos6 FGT_600E
-	    smbget 0288 fpx  FPX_400E
-
-	    smbget 1561 fos6 FGT_VM64_KVM
-	    smbget 0288 fpx  FPX_VMWARE
-
-	    smbget 0066 fos701 FGT_VM64
-	    smbget 0066 v7.0.0 FGT_VM64
-	  $0 [subdir] [text]
+	    smb-get 'FortiProxy-KVM v7.0.0,build0082,220527 (Interim)'
+	    smb-get 'firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)'
 END
 )
-unset buildnum
-unset product
-unset model
+_ZT_ARGS_Usage=${USAGE}
+if ! parse-args "$@" ; then
+    echo "----------end--------------"
+    return
+fi
 
-# @args:buildnum
-if [ -z ${1} ]; then
+
+product=$(expr match "${_ZT_ARGS_Positional}" 'Forti\([[:alpha:]]*\)-.*$')
+if [ ${product} = "Proxy" ]; then
+    product='fpx'
+elif [ ${product} = "Gate" ]; then
+    product='fos'
+fi
+mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
+buildnum=$(expr match "${_ZT_ARGS_Positional}" '.*build\([[:digit:]]*\).*$')
+model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
+model=${model/-/_}
+release=$(expr match "${_ZT_ARGS_Positional}" 'Release\(.*\)$')
+if [ -z ${release} ]; then
+    release='deb'
+else
+    release='out'
+fi
+
+echo "Info: ${_ZT_ARGS_Positional}"
+echo "product:'$product' ver:'$mainver' model:'$model' buildnum:'$buildnum' release:'$release'"
+
+if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum} ] || [ -z ${release} ] ; then
     do-echo $USAGE
     USAGE=''
-    echo "no buildnum."
+    echo "Can't get correct info, EXIT!"
     return 1
-else
-    buildnum=${1}
-    shift
 fi
-
-# @args:product
-if [ -z ${1} ]; then
-    do-echo $USAGE
-    USAGE=''
-    echo "no product."
-    return 1
-else
-    product=${1}
-    shift
-fi
-
-# @args:model
-if [ -z ${1} ]; then
-    do-echo $USAGE
-    USAGE=''
-    product='ls'
-    echo "no model, change product to 'ls'"
-else
-    model=${1}
-    shift
-fi
-
 
 #get ${model}-v6-build${buildnum}-FORTINET.deb;
 #get ${model}-v6-build${buildnum}-FORTINET.out;
 #get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz;
 #get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;
 if [ ${product} = "fpx" ]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v1.00/images/build${buildnum}; get ${model}-v100-build${buildnum}-FORTINET.out.extra.tgz;'"
-elif [ ${product} = "ls" ]; then
-    #eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.deb;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; ls *-FORTINET.out.extra.tgz;'"
-elif [ ${product} = "fos6" ]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v6.00/images/build${buildnum}; get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v6.00/images/build${buildnum}; \
-        get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz; \
-        get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz; \
+    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v${mainver}.00/images/build${buildnum}; get ${model}-v${mainver}00-build${buildnum}-FORTINET.out.extra.tgz;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+        cd FortiProxy/v${mainver}.00/images/build${buildnum}; \
+        get ${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
-elif [ ${product} = "fos7" ]; then
-    # echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz;'"
-    # eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-    #     cd FortiOS/v7.00/images/build${buildnum}; \
-    #     get ${model}-v7.0.0-build${buildnum}-FORTINET.deb.extra.tgz; \
-    #     get ${model}-v7.0.0-build${buildnum}-FORTINET.out.extra.tgz; \
-    #     '"
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz;'"
+elif [ ${product} = "fos" ]; then
+    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v${mainver}.00/images/build${buildnum}; get ${model}-v${mainver}-build${buildnum}-FORTINET.out.extra.tgz;'"
     eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v7.00/images/build${buildnum}; \
-        get ${model}-v7-build${buildnum}-FORTINET.deb.extra.tgz; \
-        get ${model}-v7-build${buildnum}-FORTINET.out.extra.tgz; \
+        cd FortiOS/v${mainver}.00/images/build${buildnum}; \
+        get ${model}-v${mainver}-build${buildnum}-FORTINET.${release}.extra.tgz; \
+        get ${model}-${product}-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
 elif [ ${product} = "fos701" ]; then
     echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz;'"
     eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
         cd FortiOS/v7.00/images/build${buildnum}; \
-        get ${model}-v7.0.1-build${buildnum}-FORTINET.deb.extra.tgz; \
-        get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz; \
+        get ${model}-v7.0.1-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
-elif [[ ${product} = v7* ]]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz;'"
+elif [ ${product} = "ls" ]; then
     eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v7.00/images/build${buildnum}; \
-        get ${model}-${product}-build${buildnum}-FORTINET.deb.extra.tgz; \
-        get ${model}-${product}-build${buildnum}-FORTINET.out.extra.tgz; \
+        cd FortiOS/v${mainver}.00/images/build${buildnum}; \
+        ls *-FORTINET.out.extra.tgz; \
         '"
-else
-    do-echo $USAGE
-    USAGE=''
-    return 1
 fi
 

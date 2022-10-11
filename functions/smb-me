@@ -4,6 +4,11 @@
 #
 # MUST config: ~/.smbclient.conf
 #
+if ! chk-var $MY_USERNAME ; then
+    echo "Please define MY_USERNAME at ~/.local/local, used as dir-name here."
+    MY_USERNAME='hyu'
+fi
+
 put_files=("patch.diff" \
   "patch.eco.diff" \
   "image.out" \
@@ -26,16 +31,16 @@ if [ -z ${1} ]; then
 
     #eval "$LFTP_CMD 'cd $LFTP_DIR; rm -fr $dname; quit;'"
     #eval "smbclient //imagesvr/images -U 'fortinet-us/hyu' -c 'mkdir hyu; cd hyu; rmdir $dname; mkdir $dname; cd $dname; put image.out; q;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'mkdir hyu; q;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; rmdir $dname; q;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu; mkdir $dname; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'mkdir ${MY_USERNAME}; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd ${MY_USERNAME}; rmdir $dname; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd ${MY_USERNAME}; mkdir $dname; q;'"
 
     for one_file in "${put_files[@]}" ; do
         if [ -f ${one_file} ]; then
-            eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; put ${one_file}; q;'"
+            eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd ${MY_USERNAME}/$dname; put ${one_file}; q;'"
         fi
     done
 
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd hyu/$dname; pwd; ls; q;'"
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/Swap-1Day -c 'cd ${MY_USERNAME}/$dname; pwd; ls; q;'"
 fi
 

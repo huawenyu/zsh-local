@@ -1,17 +1,113 @@
-#compdef hello
+#compdef _hello hello
+#
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
+#
+# Usage:
+#	hello -h | --help
+#	hello quietly [--silent] <message>
+#	hello loudly [--repeat=<number>] <message>
 
-function _hello() {
-    local state
-    _arguments '1: :(cat head)' '2: :->log' '3: :->cache'
+#function _hello() {
+#    local state
+#    _arguments '1: :(cat head)' '2: :->log' '3: :->cache'
+#
+#    case $state in
+#        log)
+#            _describe 'command' "($(ls $1))"    #this is for demonstration purpose only, you'll use _files utility to list a directories
+#            ;;
+#        cache)
+#            compadd one two #this could be done above also, in _arguments, you know how :)
+#            ;;
+#    esac
+#}
 
-    case $state in
-        log)
-            _describe 'command' "($(ls $1))"    #this is for demonstration purpose only, you'll use _files utility to list a directories
-            ;;
-        cache)
-            compadd one two #this could be done above also, in _arguments, you know how :)
-            ;;
+
+
+#function _hello {
+#    local line
+#
+#    _arguments -C \
+#        "-h[Show help information]" \
+#        "--h[Show help information]" \
+#        "1: :(quietly loudly)" \
+#        "*::arg:->args"
+#
+#    case $line[1] in
+#        loudly)
+#            _hello_loudly
+#        ;;
+#        quietly)
+#            _hello_quietly
+#        ;;
+#    esac
+#}
+#
+#function _hello_quietly {
+#    _arguments \
+#        "--silent[Dont output anything]"
+#}
+#
+#function _hello_loudly {
+#    _arguments \
+#        "--repeat=[Repat the <message> any number of times]"
+#}
+
+
+
+
+
+
+#compdef padrino
+
+typeset -A opt_args
+
+_arguments -C \
+  '1:cmd:->cmds' \
+  '2:generators:->generator_lists' \
+  '*:: :->args' \
+&& ret=0
+
+case "$state" in
+  (cmds)
+     local commands; commands=(
+      'g:Padrinos generators'
+     )
+
+      _describe -t commands 'command' commands && ret=0
+  ;;
+  (generator_lists)
+    local generators; generators=(
+      'controller:creates a new controller'
+      'mailer:creates a new mailer'
+      'migration:creates a new migration'
+      'model:creates a new model'
+      'project:create a new Padrino app'
+      'plugin:add plugin to your app'
+    )
+    _describe -t generators 'generator' generators && ret=0
+  ;;
+  (args)
+    case $line[2] in
+      (controller)
+        _arguments \
+          '-d:remove all generated files' \
+          '-n:specify the application' \
+          '-r:specify the root'
+          ret=0
+      ;;
+      (mailer)
+        local mailers; mailers=(
+          '-a:creates a mailer for the specified subapp'
+          '-d:removes all generated files'
+          '-n:specify the application'
+          '-r:specify the root destination path'
+        )
+        _describe -t mailers 'mailer' mailers && ret=0
+      ;;
     esac
-}
+  ;;
+esac
 
-// vim: set ft=bash
+return 1
+

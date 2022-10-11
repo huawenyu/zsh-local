@@ -1,0 +1,15 @@
+#compdef _smb-get smb-get
+
+#typeset -A opt_args
+_arguments \
+        "-h[Show help information]" \
+        "--h[Show help information]" \
+        "-n[Dryrun]" \
+        "1:The version line from from get-system-satus:()" \
+        && ret=0
+
+#_arguments "1:--The version line:()"
+#_arguments "1:The version line 'get system status' FortiGate-VM64-KVM v7.2.1,build1220,220615 (Interim):()"
+
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :

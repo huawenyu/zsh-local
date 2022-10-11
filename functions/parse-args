@@ -15,14 +15,17 @@
 POSITIONAL_ARGS=()
 
 # set default value
-_ZT_ARGS_Usage=false
+_ZT_ARGS_Help=false
 _ZT_ARGS_Verbose=false
-_ZT_ARGS_VerboseMore=false
+_ZT_ARGS_Verbose2=false
 _ZT_ARGS_Version=false
 _ZT_ARGS_Default=false
+_ZT_ARGS_Confirm=false
 _ZT_ARGS_Dryrun=false
+_ZT_ARGS_Quiet=false
+_ZT_ARGS_Test=false
 _ZT_ARGS_Action='default'
-_ZT_ARGS_Silent=false
+_ZT_ARGS_File=""
 _ZT_ARGS_Msg="none"
 _ZT_ARGS_Src=""     # src-file/src-dir/from-Addr 192.168.122.10
 _ZT_ARGS_Dst=""     # dst-file/dst-dir/to-Addr 192.168.122.10
@@ -35,7 +38,7 @@ _ZT_ARGS_UserPwd=""     # user123:password123
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
-      _ZT_ARGS_Usage=true
+      _ZT_ARGS_Help=true
       shift # past argument, usage: if [ "$_ZT_ARGS_Verbose" = true ] ; then
       ;;
     -V|--version)
@@ -44,6 +47,11 @@ while [[ $# -gt 0 ]]; do
       ;;
     -a|--action)
       _ZT_ARGS_Action="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -f|--file)
+      _ZT_ARGS_File="$2"
       shift # past argument
       shift # past value
       ;;
@@ -91,12 +99,20 @@ while [[ $# -gt 0 ]]; do
       _ZT_ARGS_Dryrun=true
       shift # past argument
       ;;
-    -i|--silent)
-      _ZT_ARGS_Silent=true
+    -i|--confirm)
+      _ZT_ARGS_Confirm=true
+      shift # past argument
+      ;;
+    -q|--quiet)
+      _ZT_ARGS_Quiet=true
+      shift # past argument
+      ;;
+    -t|--test)
+      _ZT_ARGS_Test=true
       shift # past argument
       ;;
     -vv|-vvv)
-      _ZT_ARGS_VerboseMore=true
+      _ZT_ARGS_Verbose2=true
       shift # past argument
       ;;
     -v|--verbose)
@@ -112,27 +128,30 @@ while [[ $# -gt 0 ]]; do
       exit 1
       ;;
     *)
-      POSITIONAL_ARGS+=("$1") # save positional arg
+      _ZT_ARGS_Positional+=("$1") # save positional arg
       shift # past argument
       ;;
   esac
 done
 
-#set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
+#set -- "${_ZT_ARGS_Positional[@]}" # restore positional parameters
 
-if [ "$_ZT_ARGS_VerboseMore" = true ] || [ "$_ZT_ARGS_Usage" = true ] ; then
-    echo "  Usage: -h help/usage, -v verbose, -vv dump-args, -V version"
-    echo "         -a action, -m message -n dryrun, -i silent"
-    echo "         -s src, -d dst, -p port, -h host, -x proxy, -u UserPwd"
+if [ "$_ZT_ARGS_Verbose2" = true ] || [ "$_ZT_ARGS_Help" = true ] ; then
+    echo "  Option -h help/usage, -v verbose, -vv dump-args, -V version"
+    echo "         -a action/model, -m message -i confirm, -n dryrun, -k number, -q quiet, -t test"
+    echo "         -s src/scope, -d dst/directory, -f file, -p port, -h host, -x proxy, -u UserPwd"
     echo ""
-    echo "    _ZT_ARGS_Usage       = ${_ZT_ARGS_Usage}"
+    echo "    _ZT_ARGS_Help        = ${_ZT_ARGS_Help}"
     echo "    _ZT_ARGS_Version     = ${_ZT_ARGS_Version}"
     echo "    _ZT_ARGS_Verbose     = ${_ZT_ARGS_Verbose}"
-    echo "    _ZT_ARGS_VerboseMore = ${_ZT_ARGS_VerboseMore}"
+    echo "    _ZT_ARGS_Verbose2    = ${_ZT_ARGS_Verbose2}"
     echo "    _ZT_ARGS_Default     = ${_ZT_ARGS_Default}"
     echo "    _ZT_ARGS_Dryrun      = ${_ZT_ARGS_Dryrun}"
+    echo "    _ZT_ARGS_Confirm     = ${_ZT_ARGS_Confirm}"
+    echo "    _ZT_ARGS_Quiet       = ${_ZT_ARGS_Quiet}"
+    echo "    _ZT_ARGS_Test        = ${_ZT_ARGS_Test}"
     echo "    _ZT_ARGS_Action      = ${_ZT_ARGS_Action}"
-    echo "    _ZT_ARGS_Silent      = ${_ZT_ARGS_Silent}"
+    echo "    _ZT_ARGS_File        = ${_ZT_ARGS_File}"
     echo "    _ZT_ARGS_Msg         = ${_ZT_ARGS_Msg}"
     echo "    _ZT_ARGS_Src         = ${_ZT_ARGS_Src}"
     echo "    _ZT_ARGS_Dst         = ${_ZT_ARGS_Dst}"
@@ -142,57 +161,11 @@ if [ "$_ZT_ARGS_VerboseMore" = true ] || [ "$_ZT_ARGS_Usage" = true ] ; then
     echo "    _ZT_ARGS_ProxyPort   = ${_ZT_ARGS_ProxyPort}"
     echo "    _ZT_ARGS_UserPwd     = ${_ZT_ARGS_UserPwd}"
     echo ""
-    echo "  See Also: ftp-*, smb-*, t-*, t-work, tagme, syncme, chk-*, chk-ubuntu, Bear, bear-me"
-├── appendfpath
-├── appendpath
-├── Bear
-├── bear-me
-├── chk-num
-├── chk-os-is
-├── chk-var
-├── Clang
-├── debug
-├── do-cmd
-├── do-echo
-├── fpath
-├── ftp-get
-├── ftp-ls
-├── ftp-me
-├── ftp-mirror
-├── ftp-prepare
-├── ftp-put
-├── ftp-rm
-├── has-var
-├── _hello
-├── hyperlink
-├── hyperlink-file
-├── hyperlink-file-pr
-├── hyperlink-pr
-├── insertpath
-├── is-callable
-├── is-recursive-exist
-├── is-true
-├── p
-├── parse-args
-├── path
-├── path-chk-dup
-├── prependfpath
-├── prependpath
-├── smb-get
-├── smb-login
-├── smb-me
-├── syncme
-├── tail
-├── t-doc
-├── t-layout
-├── t-preview
-├── _traceme-py
-├── t-share
-├── t-wiki
-└── t-work
+    echo "  See Also: tagme, syncme, t-*, t-work, ftp-*, smb-*, chk-*, checkhealth, Bear, bear-me"
 fi
 
-if [ "$_ZT_ARGS_Usage" = true ] ; then
+if [ ${_ZT_ARGS_Help} = true ] ; then
+    do-echo "${_ZT_ARGS_Usage}"
     return 1
 fi
 

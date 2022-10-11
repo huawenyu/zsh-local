@@ -1,9 +1,30 @@
 #!/bin/bash
 
-#echo "Generating tags and cscope database..."
 SECONDS=0
 scriptDir=$(dirname $0)
 workDir=$(pwd)
+
+_ZT_ARGS_Usage=$(cat <<-END
+	Generating tags and cscope database...
+
+	Sample:
+	  tagme
+	  tagme -a link
+	  tagme -a save
+	  tagme -a clean
+	  tagme -f tag-update-file
+END
+)
+
+if ! parse-args "$@" ; then
+    echo "----------end--------------"
+    return
+fi
+action=${_ZT_ARGS_Action}
+one_file=${_ZT_ARGS_File}
+tagscope=$_ZT_ARGS_Src
+
+
 echo "location: ${BASEDIR}"
 # Check with: $ ctags --list-kinds=c
 #ctags -e --c-kinds=+defgstum -L ${FLIST} > /dev/null 2>&1
@@ -38,71 +59,6 @@ tag_files=( \
   "${ClangdFile}" \
 )
 
-Help()
-{
-   # Display Help
-   echo "$ tagme"
-   echo "$ tagme -a link"
-   echo "$ tagme -a save"
-   echo "$ tagme -a clean"
-   echo
-   echo "Syntax: [-a|f|s|v|h]"
-   echo "options:"
-   echo "a     all(*),link,save,clean, #(tag,scope,ccls)"
-   echo "f     onefile mode."
-   echo "s     scope: all,wad,default."
-   echo "h     Print this Help."
-   echo "v     Verbose mode."
-   echo
-}
-
-
-###########################################
-# Initialize our own variables:
-verbose=0
-action="all"
-onefile=""
-tagscope="default"
-
-# A POSIX variable
-OPTIND=1         # Reset in case getopts has been used previously in the shell.
-while getopts "h?va:f:s:" opt; do
-    case "$opt" in
-    h|\?)
-        Help
-        exit 0
-        ;;
-    v)  verbose=1
-        ;;
-    a)  action=$OPTARG
-        ;;
-    f)  onefile=$OPTARG
-        ;;
-    s)  tagscope=$OPTARG
-        ;;
-    esac
-done
-
-shift $((OPTIND-1))
-
-[ "${1:-}" = "--" ] && shift
-###########################################
-
-
-# Check Arguments
-if [[ ! -f $onefile ]]; then
-	onefile=""
-fi
-echo "RunAs: a-action=$action s-tagscope=$tagscope f-onefile=$onefile"
-echo "     a: all,link,tag,scope,ccls,save,clean"
-echo "     s: default,all,wad"
-echo "     f: <source-file>"
-
-if [[ -z "$action" ]]; then
-	echo "No action, exit!"
-	exit 0
-fi
-
 
 # Copy/Save clangd compile commands
 ClangdCompileFile()
@@ -120,7 +76,7 @@ ClangdCompileFile()
 		# Get the real path
 		origDir2=$(readlink -f ${origDir})
 		workDir2=$(readlink -f ${workDir})
-		if [ "$action" == "all" ] || [ "$action" == "link" ]; then
+		if [ "$action" == "default" ] || [ "$action" == "link" ]; then
 			srcdir="$origDir"
 			dstdir="$workDir"
 			srcdir2="$origDir2"
@@ -146,11 +102,11 @@ ClangdCompileFile()
 
 # Special handle: Rebuild the <file> assign by $1
 #   - <file> should be full-path
-if [[ -f "./.tags" && -f "$onefile" ]]; then
+if [[ -f "./.tags" && -f "$one_file" ]]; then
 	# only rebuild tags when the file belong curr dir
 	#if [[ "$1" == "$PWD/"* ]]; then
 		pwdlen=${#PWD}
-		LC_COLLATE=C ctags ${CTAGS_FLAG} -f .tags -a "./${onefile:$pwdlen}"
+		LC_COLLATE=C ctags ${CTAGS_FLAG} -f .tags -a "./${one_file:$pwdlen}"
 		#duration=$SECONDS
 		#notify-send "Done tags R $(($duration / 60)):$(($duration % 60))."
 	#fi
@@ -159,9 +115,8 @@ if [[ -f "./.tags" && -f "$onefile" ]]; then
 fi
 
 
-if [ "$action" != "all" ] && [ "$action" != "save" ]; then
-	for tagfile in "${tag_files[@]}"
-	do
+if [ "$action" != "default" ] && [ "$action" != "save" ]; then
+	for tagfile in "${tag_files[@]}" ;  do
 		if [[ "$action" == "clean" ]]; then
 			rm -f $tagfile 2> /dev/null
 		elif [[ "$action" == "link" ]]; then
@@ -196,10 +151,9 @@ if [ "$action" != "all" ] && [ "$action" != "save" ]; then
 fi
 
 
-
 #########################################################
 # Handle action=all/save {{{1
-if [ "$action" != "all" ] && [ "$action" != "save" ]; then
+if [ "$action" != "default" ] && [ "$action" != "save" ]; then
 	echo "Can't handle action '$action', Exit!"
 	exit 1
 fi
@@ -330,19 +284,19 @@ GenCcls()
 }
 
 pidTag=0
-if [[ "$action" == "all" || "$action" == "tag" ]]; then
+if [[ "$action" == "default" || "$action" == "tag" ]]; then
 	GenTag &
 	pidTag=$!
 fi
 
 pidCscope=0
-if [[ "$action" == "all" || "$action" == "cscope" ]]; then
+if [[ "$action" == "default" || "$action" == "cscope" ]]; then
 	GenScope &
 	pidCscope=$!
 fi
 
 #pidCcls=0
-#if [[ "$action" == "all" || "$action" == "ccls" ]]; then
+#if [[ "$action" == "default" || "$action" == "ccls" ]]; then
 #	GenCcls &
 #	pidCcls=$!
 #fi

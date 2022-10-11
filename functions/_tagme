@@ -1,0 +1,19 @@
+#compdef _tagme tagme
+
+typeset -A opt_args
+
+_arguments \
+    "-h[Show help information]" \
+    "-v[Verbose]" \
+    "-n[Dryrun]" \
+    "-a[Action]: :((\
+        link\:'Create softlink from the original-repo indexer-DB' \
+        save\:'Save current working dir indexer to the original-repo' \
+        clean\:'Clean indexer-DB' \
+        default\:'Create indexer-DB'))" \
+    "-f[input file]:filename:_files" \
+    "-s[Scope of files]: :(all wad $(_files))" \
+    && ret=0
+
+# vim: ft=zsh
+# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :

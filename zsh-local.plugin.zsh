@@ -62,17 +62,10 @@ fi
 
 # auto load all functions
 autoload -Uz "${0:h}/functions"/*(.:t)
+autoload -Uz compinit; compinit
 
 # avoid duplicate append
 if [[ $PMSPEC != *b* ]]; then
-    tmp=( "${0:h}/bin" )
-    case ":$PATH:" in
-      *:"$tmp":*)
-        ;;
-      *)
-        path+=$tmp
-    esac
-
     tmp=( "${0:h}/bingit" )
     case ":$PATH:" in
       *:"$tmp":*)
