@@ -25,31 +25,35 @@ fi
 
 
 product=$(expr match "${_ZT_ARGS_Positional}" 'Forti\([[:alpha:]]*\)-.*$')
+mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
+buildnum=$(expr match "${_ZT_ARGS_Positional}" '.*build\([[:digit:]]*\).*$')
+model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
+release=$(expr match "${_ZT_ARGS_Positional}" 'Release\(.*\)$')
+
+if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum} ] || [ -z ${release} ] ; then
+    echo "Info-line: ${_ZT_ARGS_Positional}"
+    echo "product:'$product' ver:'$mainver' model:'$model' buildnum:'$buildnum' release:'$release'"
+    do-echo $USAGE
+    USAGE=''
+    echo "Can't get correct info, EXIT!"
+    return 1
+fi
+
+
 if [ ${product} = "Proxy" ]; then
     product='fpx'
 elif [ ${product} = "Gate" ]; then
     product='fos'
 fi
-mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
-buildnum=$(expr match "${_ZT_ARGS_Positional}" '.*build\([[:digit:]]*\).*$')
-model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
 model=${model/-/_}
-release=$(expr match "${_ZT_ARGS_Positional}" 'Release\(.*\)$')
 if [ -z ${release} ]; then
     release='deb'
 else
     release='out'
 fi
 
-echo "Info: ${_ZT_ARGS_Positional}"
+echo "Info-line: ${_ZT_ARGS_Positional}"
 echo "product:'$product' ver:'$mainver' model:'$model' buildnum:'$buildnum' release:'$release'"
-
-if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum} ] || [ -z ${release} ] ; then
-    do-echo $USAGE
-    USAGE=''
-    echo "Can't get correct info, EXIT!"
-    return 1
-fi
 
 #get ${model}-v6-build${buildnum}-FORTINET.deb;
 #get ${model}-v6-build${buildnum}-FORTINET.out;

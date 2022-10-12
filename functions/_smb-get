@@ -1,11 +1,23 @@
 #compdef _smb-get smb-get
 
+#_describe 'command' "('-h:Show help information' '-n:Dryrun' ':The version line from from get-system-satus')"
+
+#A=( -h --help -V --version foo bar baz )
+#_arguments \
+#    ":::($A)"
+
+#A=( -h --help -V --version )
+#_arguments \
+#    - foobars \
+#    ':foobars:(foo bar baz)' \
+#    - options \
+#    ":arguments:($A)"
+
 #typeset -A opt_args
 _arguments \
         "-h[Show help information]" \
-        "--h[Show help information]" \
         "-n[Dryrun]" \
-        "1:The version line from from get-system-satus:()" \
+        ":The version info line like get-system-satus:()" \
         && ret=0
 
 #_arguments "1:--The version line:()"
