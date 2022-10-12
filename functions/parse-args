@@ -12,7 +12,7 @@
 #       Last line of file specified as non-opt/last argument:
 #       #93.184.216.34    example.com
 #
-POSITIONAL_ARGS=()
+_ZT_ARGS_Positional=()
 
 # set default value
 _ZT_ARGS_Help=false

@@ -24,15 +24,21 @@ if ! parse-args "$@" ; then
 fi
 
 
-product=$(expr match "${_ZT_ARGS_Positional}" 'Forti\([[:alpha:]]*\)-.*$')
+product=$(expr match "${_ZT_ARGS_Positional}" '.*Forti\([[:alpha:]]*\)-.*$')
 mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
+fullver=$(expr match "${_ZT_ARGS_Positional}" '.* v\(.*\),build.*$')
 buildnum=$(expr match "${_ZT_ARGS_Positional}" '.*build\([[:digit:]]*\).*$')
 model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
-release=$(expr match "${_ZT_ARGS_Positional}" 'Release\(.*\)$')
+release=$(expr match "${_ZT_ARGS_Positional}" '.*Release\(.*\)$')
+if [ -z ${release} ]; then
+    release='deb'
+else
+    release='out'
+fi
 
+dumpStr="  Info-line: ${_ZT_ARGS_Positional}\n    product:'$product' ver:'$mainver'-'$fullver' model:'$model' buildnum:'$buildnum' release:'$release'"
 if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum} ] || [ -z ${release} ] ; then
-    echo "Info-line: ${_ZT_ARGS_Positional}"
-    echo "product:'$product' ver:'$mainver' model:'$model' buildnum:'$buildnum' release:'$release'"
+    echo -e $dumpStr
     do-echo $USAGE
     USAGE=''
     echo "Can't get correct info, EXIT!"
@@ -41,37 +47,35 @@ fi
 
 
 if [ ${product} = "Proxy" ]; then
-    product='fpx'
+    product='FPX'
 elif [ ${product} = "Gate" ]; then
-    product='fos'
+    product='FGT'
 fi
 model=${model/-/_}
-if [ -z ${release} ]; then
-    release='deb'
-else
-    release='out'
-fi
 
-echo "Info-line: ${_ZT_ARGS_Positional}"
-echo "product:'$product' ver:'$mainver' model:'$model' buildnum:'$buildnum' release:'$release'"
+echo -e $dumpStr
 
 #get ${model}-v6-build${buildnum}-FORTINET.deb;
 #get ${model}-v6-build${buildnum}-FORTINET.out;
 #get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz;
 #get ${model}-v6-build${buildnum}-FORTINET.out.extra.tgz;
-if [ ${product} = "fpx" ]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiProxy/v${mainver}.00/images/build${buildnum}; get ${model}-v${mainver}00-build${buildnum}-FORTINET.out.extra.tgz;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+#
+#get FPX_KVM-v700-build0082-FORTINET.out.extra.tgz;'
+#get FGT_1000F-v7.0.6.F-build6315-FORTINET.out.extra.tgz
+if [ ${product} = "FPX" ]; then
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
         cd FortiProxy/v${mainver}.00/images/build${buildnum}; \
-        get ${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
+        get ${product}_${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
-elif [ ${product} = "fos" ]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v${mainver}.00/images/build${buildnum}; get ${model}-v${mainver}-build${buildnum}-FORTINET.out.extra.tgz;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
+elif [ ${product} = "FGT" ]; then
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
         cd FortiOS/v${mainver}.00/images/build${buildnum}; \
-        get ${model}-v${mainver}-build${buildnum}-FORTINET.${release}.extra.tgz; \
-        get ${model}-${product}-build${buildnum}-FORTINET.${release}.extra.tgz; \
+        get ${product}_${model}-v${fullver}.F-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
 elif [ ${product} = "fos701" ]; then
     echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz;'"
     eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
