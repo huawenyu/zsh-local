@@ -23,9 +23,8 @@ fi
 action=${_ZT_ARGS_Action}
 one_file=${_ZT_ARGS_File}
 tagscope=$_ZT_ARGS_Src
+origDir=
 
-
-echo "location: ${BASEDIR}"
 # Check with: $ ctags --list-kinds=c
 #ctags -e --c-kinds=+defgstum -L ${FLIST} > /dev/null 2>&1
 #
@@ -61,42 +60,43 @@ tag_files=( \
 
 
 # Copy/Save clangd compile commands
-ClangdCompileFile()
-{
-	#for run in {1..10}; do
-		if [[ -z ${origDir} ]]; then
-			origDir=$(git config --get remote.origin.url)
-			if [ ! -d $origDir ]; then
-				echo "Skip '$ClangdFile' for git-original-dir '${origDir}' not existed!"
-				#break
-				return
-			fi
+ClangdCompileFile() {
+	skipClangNote="Skip '$ClangdFile': git-original-dir '${origDir}' not existed!"
+	if ! chk-var ${origDir} ; then
+		origDir=$(git config --get remote.origin.url)
+		if ! chk-var ${origDir} || [ ! -d $origDir ]; then
+			do-echo $skipClangNote
+			return
 		fi
+	fi
 
-		# Get the real path
-		origDir2=$(readlink -f ${origDir})
-		workDir2=$(readlink -f ${workDir})
-		if [ "$action" == "default" ] || [ "$action" == "link" ]; then
-			srcdir="$origDir"
-			dstdir="$workDir"
-			srcdir2="$origDir2"
-			dstdir2="$workDir2"
-			srcfile="${origDir}/${ClangdFile}"
-			dstfile="${workDir}/${ClangdFile}"
-		elif [ "$action" == "save" ]; then
-			dstdir="$origDir"
-			srcdir="$workDir"
-			dstdir2="$origDir2"
-			srcdir2="$workDir2"
-			dstfile="${origDir}/${ClangdFile}"
-			srcfile="${workDir}/${ClangdFile}"
-		fi
+	# Get the real path
+	origDir2=$(readlink -f ${origDir})
+	workDir2=$(readlink -f ${workDir})
+	if [ "$action" == "default" ] || [ "$action" == "link" ]; then
+		srcdir="$origDir"
+		dstdir="$workDir"
+		srcdir2="$origDir2"
+		dstdir2="$workDir2"
+		srcfile="${origDir}/${ClangdFile}"
+		dstfile="${workDir}/${ClangdFile}"
+	elif [ "$action" == "save" ]; then
+		dstdir="$origDir"
+		srcdir="$workDir"
+		dstdir2="$origDir2"
+		srcdir2="$workDir2"
+		dstfile="${origDir}/${ClangdFile}"
+		srcfile="${workDir}/${ClangdFile}"
+	fi
 
+	if [[ -f "$srcfile" ]]; then
 		cp  $srcfile  $dstfile
 		sed -i   "s/${srcdir//\//\\/}/${dstdir//\//\\/}/g"  $dstfile
 		sed -i   "s/${srcdir2//\//\\/}/${dstdir2//\//\\/}/g"  $dstfile
 		echo "[Done!] Clangd ${ClangdFile}: ${srcdir} -> ${dstdir}"
-	#done
+	else
+		do-echo $skipClangNote
+	fi
 }
 
 
