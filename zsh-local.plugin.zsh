@@ -202,6 +202,7 @@ alias pwd=" pwd | sed 's/^/ /g'"
 ## sudo apt install -y tldr
 # Better-support customize dir: pip3 install tldr
 is-callable tldr && { alias m=tldr; }
+is-callable tldr && is-callable fzf && { alias tl="tldr --list | fzf --preview 'tldr {}' | xargs tldr" }
 if is-callable tldr; then
     #export TLDR_COLOR_NAME="cyan"
     #export TLDR_COLOR_DESCRIPTION="white"
@@ -212,7 +213,7 @@ if is-callable tldr; then
     #export TLDR_CACHE_ENABLED=1
     #export TLDR_CACHE_MAX_AGE=720
     #export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages"
-    export TLDR_PAGES_SOURCE_LOCATION=file://$HOME/dotfiles/tldr
+    export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages; file://$HOME/dotwiki/tldr; file://$HOME/dotfiles/tldr"
     export TLDR_DOWNLOAD_CACHE_LOCATION="https://tldr-pages.github.io/assets/tldr.zip"
 fi
 
