@@ -213,7 +213,7 @@ if is-callable tldr; then
     #export TLDR_CACHE_ENABLED=1
     #export TLDR_CACHE_MAX_AGE=720
     #export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages"
-    export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages; file://$HOME/dotwiki/tldr; file://$HOME/dotfiles/tldr"
+    export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages; file://$HOME/dotwiki/tldr; file://$HOME/wiki/tldr; file://$HOME/dotfiles/tldr"
     export TLDR_DOWNLOAD_CACHE_LOCATION="https://tldr-pages.github.io/assets/tldr.zip"
 fi
 
