@@ -201,7 +201,7 @@ alias pwd=" pwd | sed 's/^/ /g'"
 
 ## sudo apt install -y tldr
 # Better-support customize dir: pip3 install tldr
-is-callable tldr && { alias m="tldr -L en -p linux"; }
+is-callable tldr && { alias m="tldr -p linux common -L en "; }
 is-callable tldr && is-callable fzf && { alias tl="tldr --list | fzf --preview 'tldr {}' | xargs tldr" }
 if is-callable tldr; then
     #export TLDR_COLOR_NAME="cyan"
