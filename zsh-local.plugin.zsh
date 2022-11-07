@@ -196,7 +196,8 @@ fi
 
 
 # alias: pwd, dict, sharepatch {{{2
-alias pwd=" pwd | sed 's/^/ /g'"
+## Cause fail: cd $(pwd)
+#alias pwd=" pwd | sed 's/^/ /g'"
 #alias pwd=' pwd -L'
 
 ## sudo apt install -y tldr

@@ -1,8 +1,0 @@
-# vim: ft=zsh
-# vim: set copyindent preserveindent et sts=0 sw=4 ts=4 :
-#
-if [ -t 0 ]; then
-    \tail "$@" 2> >(grep -v truncated >&2)
-else
-    \tail "$@" 2> >(grep -v truncated >&2)
-fi
