@@ -3,10 +3,6 @@
 SECONDS=0
 scriptDir=$(dirname $0)
 currDir=$(/usr/bin/pwd)
-if [[ "$currDir" == "$HOME" ]]; then
-    echo "Please enter a workdir, don't run from top-dir directly, e.g. '$HOME'."
-	return
-fi
 
 # Change work dir to git-toplevel:
 # - if git-repo, the git-toplevel is the work dir
@@ -43,6 +39,11 @@ tagscope=$_ZT_ARGS_Src
 origDir=
 dstDir=${workDir}
 tmpDir='/tmp/tagme'
+
+if [[ "$currDir" == "$HOME" ]]; then
+    echo "Please enter a workdir, don't run from top-dir directly, e.g. '$HOME'."
+	return
+fi
 
 # Check with: $ ctags --list-kinds=c
 #ctags -e --c-kinds=+defgstum -L ${FLIST} > /dev/null 2>&1
