@@ -83,12 +83,12 @@ clean_files=( \
   "${tmpDir}" \
 )
 
-trap cleanup EXIT
+trap cleanup EXIT INT TERM
 function cleanup() {
 	trap - EXIT
 
 	duration=$SECONDS
-	echo "cleanup(action=$action time=$(($duration / 60))m:$(($duration % 60))s)"
+	echo "trap-cleanup(action=$action time=$(($duration / 60))m:$(($duration % 60))s)"
 
 	for cleanfile in "${clean_files[@]}" ;  do
 		rm -fr "${cleanfile}" 2> /dev/null
@@ -163,7 +163,7 @@ fi
 if [ "$action" == "clean" ] || [ "$action" == "link" ]; then
 	for tagfile in "${tag_files[@]}" ;  do
 		if [[ "$action" == "clean" ]]; then
-			rm -f $tagfile 2> /dev/null
+			rm -f "${currDir}/$tagfile" 2> /dev/null
 		elif [[ "$action" == "link" ]]; then
 			if [ $tagfile == "${tmpDir}" ]; then
 				continue
