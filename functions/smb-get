@@ -13,6 +13,10 @@
 #
 USAGE=$(cat <<-END
 	  Sample:
+	    smb-get image
+	    smb-get branch
+	    smb-get login
+
 	    smb-get 'FortiProxy-KVM v7.0.0,build0082,220527 (Interim)'
 	    smb-get 'Version: FortiGate-2201E v7.2.4,build1357,221030 (interim)'   <== interim out version
 	    smb-get 'firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)'
@@ -24,6 +28,28 @@ if ! parse-args "$@" ; then
     return
 fi
 
+if [ "${_ZT_ARGS_Positional}" = "image" ]; then
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c '
+        cd FortiProxy/v7.00/images; \
+        ls; \
+        '"
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
+    return
+elif [ "${_ZT_ARGS_Positional}" = "branch" ]; then
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c '
+        cd FortiProxy/v7.00/images/NoMainBranch; \
+        ls; \
+        '"
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
+    return
+elif [ "${_ZT_ARGS_Positional}" = "login" ]; then
+    eval "smbclient -A ~/.smbclient.conf //imagesvr/images"
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
+    return
+fi
 
 product=$(expr match "${_ZT_ARGS_Positional}" '.*Forti\([[:alpha:]]*\)-.*$')
 mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
