@@ -18,6 +18,7 @@ USAGE=$(cat <<-END
 	    smb-get login
 
 	    smb-get 'FortiProxy-KVM v7.0.0,build0082,220527 (Interim)'
+	    smb-get 'FortiProxy-2000E v7.0.0,build8003b0110,221115 (GA) fortidev 6.0.1.0005'    <=== diag sys process pstack <pid>
 	    smb-get 'Version: FortiGate-2201E v7.2.4,build1357,221030 (interim)'   <== interim out version
 	    smb-get 'firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)'
 END
@@ -55,19 +56,20 @@ product=$(expr match "${_ZT_ARGS_Positional}" '.*Forti\([[:alpha:]]*\)-.*$')
 mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
 fullver=$(expr match "${_ZT_ARGS_Positional}" '.* v\(.*\),build.*$')
 buildnum=$(expr match "${_ZT_ARGS_Positional}" '.*build\([[:digit:]]*\).*$')
+branchnum=$(expr match "${_ZT_ARGS_Positional}" '.*build.*b\([[:digit:]]*\),.*$')
 model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
 
-releaseOrg=$(expr match "${_ZT_ARGS_Positional}" '.* \(.*\)$')
+releaseOrg=$(expr match "${_ZT_ARGS_Positional}" '.* (\(.*\)).*$')
 release='out'
-if [ ${releaseOrg} = "(Release)" ]; then
+if [ ${releaseOrg} = "Release" ] || [ ${releaseOrg} = "GA" ] ; then
     release='out'
-elif [ ${releaseOrg} = "(interim)" ]; then
+elif [ ${releaseOrg} = "interim" ]; then
     release='out'
-elif [ ${releaseOrg} = "(Interim)" ]; then
+elif [ ${releaseOrg} = "Interim" ]; then
     release='deb'
 fi
 
-dumpStr="  Info-line: ${_ZT_ARGS_Positional}\n    product:'$product' ver:'$mainver'-'$fullver' model:'$model' buildnum:'$buildnum' release:'$release'-'$releaseOrg'"
+dumpStr="Info-line:\n  product:'$product'\n  ver:'$mainver'-'$fullver'\n  model:'$model'\n  buildnum:'$buildnum'\n  branchnum:'$branchnum'\n  release:'$release'-'$releaseOrg'"
 if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum} ] || [ -z ${release} ] ; then
     echo -e $dumpStr
     do-echo $USAGE
@@ -86,6 +88,7 @@ model=${model/-/_}
 
 echo -e $dumpStr
 
+
 #get ${model}-v6-build${buildnum}-FORTINET.deb;
 #get ${model}-v6-build${buildnum}-FORTINET.out;
 #get ${model}-v6-build${buildnum}-FORTINET.deb.extra.tgz;
@@ -94,20 +97,31 @@ echo -e $dumpStr
 #get FPX_KVM-v700-build0082-FORTINET.out.extra.tgz;'
 #get FGT_1000F-v7.0.6.F-build6315-FORTINET.out.extra.tgz
 if [ ${product} = "FPX" ]; then
-    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
-        cd FortiProxy/v${mainver}.00/images/build${buildnum}; \
-        get ${product}_${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
-        '"
-    do-echo ${cmdStr}
-    do-cmd ${cmdStr}
+    if [ ${buildnum} = ${branchnum} ]; then
+        cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+            cd FortiProxy/v${mainver}.00/images/build${buildnum}; \
+            get ${product}_${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
+            '"
+    else
+        is_gitdir=$(git rev-parse --is-inside-work-tree)
+        if [ ${is_gitdir} = "true" ]; then
+            branchName=$(git rev-parse --abbrev-ref HEAD)
+            # \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_gui_frozen/build_tag_8003
+            cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+                cd FortiProxy/v${mainver}.00/images/NoMainBranch/${branchName//br_/fproxy_}/build_tag_${buildnum}; \
+                get ${product}_${model}-v${mainver}00-build${buildnum}-FORTINET.${release}.extra.tgz; \
+                '"
+        else
+            echo "Please change the working dir to this FPX special branch, EXIT!"
+            return 1
+        fi
+    fi
 elif [ ${product} = "FGT" ]; then
     cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
         cd FortiOS/v${mainver}.00/images/build${buildnum}; \
         get ${product}_${model}-v${mainver}-build${buildnum}-FORTINET.${release}.extra.tgz; \
         get ${product}_${model}-v${fullver}.F-build${buildnum}-FORTINET.${release}.extra.tgz; \
         '"
-    do-echo ${cmdStr}
-    do-cmd ${cmdStr}
 elif [ ${product} = "fos701" ]; then
     echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz;'"
     eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
@@ -119,5 +133,14 @@ elif [ ${product} = "ls" ]; then
         cd FortiOS/v${mainver}.00/images/build${buildnum}; \
         ls *-FORTINET.out.extra.tgz; \
         '"
+    return 0
 fi
 
+do-echo ${cmdStr}
+if [ ${_ZT_ARGS_Dryrun} = "true" ]; then
+    echo "-------------------"
+    echo "Dryrun, EXIT!"
+    echo "-------------------\n"
+else
+    do-cmd ${cmdStr}
+fi
