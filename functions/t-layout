@@ -21,6 +21,7 @@ USAGE=$(cat <<-END
 	    $cmd create [nameLayout] [nameWindow] [bugNum]
 END
 )
+_ZT_ARGS_Usage=${USAGE}
 
 usage=0
 # @args:action
