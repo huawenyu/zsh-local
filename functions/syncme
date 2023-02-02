@@ -37,9 +37,16 @@ if ! chk-var ${_ZT_ARGS_Dst} ; then
     return
 fi
 
-if is-callable bsync; then
+if [ ${_ZT_ARGS_FollowLink} = "false" ] && [ ${_ZT_ARGS_KeepLink} = "false" ] && is-callable bsync; then
     bsync -v -i ${_ZT_ARGS_Src}  ${_ZT_ARGS_Dst}
 else
-    rsync -avrz --progress ${_ZT_ARGS_Src}  ${_ZT_ARGS_Dst}
+    extraArg=""
+    if [ ${_ZT_ARGS_FollowLink} = "true" ]; then
+        extraArg += " -L "
+    fi
+    if [ ${_ZT_ARGS_KeepLink} = "true" ]; then
+        extraArg += " -K "
+    fi
+    rsync -avrz ${extraArg} --progress ${_ZT_ARGS_Src}  ${_ZT_ARGS_Dst}
 fi
 

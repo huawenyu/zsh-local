@@ -24,6 +24,11 @@ _ZT_ARGS_Confirm=false
 _ZT_ARGS_Dryrun=false
 _ZT_ARGS_Quiet=false
 _ZT_ARGS_Test=false
+#
+#https://serverfault.com/questions/245774/perform-rsync-while-following-sym-links
+_ZT_ARGS_FollowLink=false     # The -L flag to rsync will sync the contents of files or directories linked to, rather than the symbolic link.
+_ZT_ARGS_KeepLink=false       # need both -L and -K if you have symlinks on both sides, e.g. you already had your 1st rsync done and want to update the backup using rsync.
+
 _ZT_ARGS_Action='default'
 _ZT_ARGS_File=""
 _ZT_ARGS_Msg="none"
@@ -35,6 +40,7 @@ _ZT_ARGS_Local=""   # Listen on local: 0.0.0.0:8080
 _ZT_ARGS_ProxyPort=""   # 192.168.122.10:8080
 _ZT_ARGS_UserPwd=""     # user123:password123
 
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
@@ -43,6 +49,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     -V|--version)
       _ZT_ARGS_Version=true
+      shift # past argument
+      ;;
+    -L|--copy-links)
+      _ZT_ARGS_FollowLink=true
+      shift # past argument
+      ;;
+    -K|--keep-dirlinks)
+      _ZT_ARGS_KeepLink=true
       shift # past argument
       ;;
     -a|--action)
