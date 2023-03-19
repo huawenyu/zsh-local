@@ -289,6 +289,13 @@ if $conf_fort ; then
 fi
 
 
+# https://unix.stackexchange.com/questions/103898/how-to-start-tmux-with-attach-if-a-session-exists
+# Avoid nestted when `sudo -s` (which would dutifully load my .bashrc again and double nest),
+if [ -z "$TMUX" ] && [ ${UID} != 0 ]; then
+    tmux new-session -A -s default
+fi
+
+
 # Disable warning messsage:
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
 unset GNOME_KEYRING_CONTROL
