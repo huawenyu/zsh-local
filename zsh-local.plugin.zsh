@@ -331,21 +331,21 @@ fi
 # Vi keybinding
 #bindkey -v
 
-# manpager cannot use pipe to link the commands
-#export MANPAGER="col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -"
-#export MANPAGER="/bin/sh -c \"col -b | /usr/bin/vim.gtk3 -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
-#
-# https://www.onooks.com/linux-mint-man-pages-require-sudo-when-pager-is-neovim/
-## The issue come from when change the man to nvim:
-# $ man ls
-#     fuse: mount failed: Permission denied
-#     Cannot mount AppImage, please check your FUSE setup.
-if is-callable nvim; then
-	#export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
-	#export MANPAGER="nvim -c 'set ft=man' -"
-	export MANPAGER="nvim +Man!"
-	export MANWIDTH=999
-fi
+## manpager cannot use pipe to link the commands
+##export MANPAGER="col -b | vim -c 'set ft=man ts=8 nomod nolist nonu noma' -"
+##export MANPAGER="/bin/sh -c \"col -b | /usr/bin/vim.gtk3 -c 'set ft=man ts=8 nomod nolist nonu noma' -\""
+##
+## https://www.onooks.com/linux-mint-man-pages-require-sudo-when-pager-is-neovim/
+### The issue come from when change the man to nvim:
+## $ man ls
+##     fuse: mount failed: Permission denied
+##     Cannot mount AppImage, please check your FUSE setup.
+#if is-callable nvim; then
+#	#export MANPAGER="nvim -u $HOME/.config/nvim/init_for_man.vim -c 'set ft=man' -"
+#	#export MANPAGER="nvim -c 'set ft=man' -"
+#	export MANPAGER="nvim +Man!"
+#	export MANWIDTH=999
+#fi
 
 # Don't use nvimpager:
 # - can't support tmux-vim-jump
