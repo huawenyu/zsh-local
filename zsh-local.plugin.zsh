@@ -290,11 +290,16 @@ fi
 
 
 # https://unix.stackexchange.com/questions/103898/how-to-start-tmux-with-attach-if-a-session-exists
-# Avoid nestted when `sudo -s` (which would dutifully load my .bashrc again and double nest),
+#   Avoid nestted when `sudo -s` (which would dutifully load my .bashrc again and double nest),
+# https://superuser.com/questions/48783/how-can-i-pass-an-environment-variable-through-an-ssh-command
+#   Pass TMUX to remote to avoid ssh tmux-nested
+#     ~/.ssh/config (locally)
+#        SendEnv TMUX
+#     /etc/ssh/sshd_config (on the remote end)
+#        AcceptEnv TMUX
 if [ -z "$TMUX" ] && [ ${UID} != 0 ]; then
     tmux new-session -A -s default
 fi
-
 
 # Disable warning messsage:
 #   WARNING: gnome-keyring:: couldn't connect to: /run/user/1000/keyring-s99rSr/pkcs11: Connection refused
