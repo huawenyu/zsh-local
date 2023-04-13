@@ -14,7 +14,7 @@ USAGE=$(cat <<-END
 	  $cmd alias "$0"
 	  Sample:
 	    $cmd [default=list]
-	    $cmd list	+=== list current layout, we can create by 'tlayout save'
+	    $cmd list	+=== list current layout, we can create by 't-layout save'
 	    $cmd del	+=== delete current tmux-window/project-directory
 	    $cmd save|set [layout, 'default']
 	    $cmd create	+=== apply the selected layout, [default]
@@ -92,7 +92,7 @@ fi
 # do-task
 if [ ${action} == "save" ]; then
     do-cmd tmux display-message -p "${layout}='#{window_layout}'" >> /tmp/tmux.layout
-    do-cmd tlayout list
+    do-cmd t-layout list
     return 0
 elif [ ${action} == "set" ]; then
     # <nameLayout>='layoutString'

@@ -264,7 +264,7 @@ unsetopt correct_all
 unsetopt nomatch
 
 
-is-callable direnv && { eval "$(direnv hook zsh)"; }
+#is-callable direnv && { eval "$(direnv hook zsh)"; }
 is-callable rustc && { export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib/src/rust/src/; }
 
 # Setup env vars {{{1
@@ -405,3 +405,4 @@ if [ -n "$TMUX" ] && tmux ls >/dev/null 2>/dev/null; then
 fi
 #######################################################################
 
+export LFTP_ATCMD="lftp --norc -c 'open -u ftpuser,ftpuser 172.16.80.139; set ftp:ssl-allow off; set xfer:clobber on; set ssl:verify-certificate no;'"

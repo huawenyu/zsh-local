@@ -12,7 +12,7 @@ else
 	if [ -z ${branch+x} ]; then
 		branch=$(git branch | sed -n -e 's/^\* \(.*\)/\1/p')
 	fi
-	cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo 'The file ~/workref/compile_commands.json-${branch} not exist!' ; exit 1; }
+	cp ~/workref/compile_commands.json-${branch} compile_commands.json || { echo "The file ~/workref/compile_commands.json-${branch} not exist!" ; return; }
 fi
 
 sample_dir=$(awk 'match($0, /-I(.*)\/daemon\/wad\//, arr) {print arr[1]; exit}' compile_commands.json)
