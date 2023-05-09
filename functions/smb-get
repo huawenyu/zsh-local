@@ -81,9 +81,9 @@ model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
     matureOrg=$(expr match "${_ZT_ARGS_Positional}" '.* (\(.*\)).*\(Release\).*$')
 
     mature=''
-    if [ ${matureOrg} = "GA.M" ] || [ ${matureOrg} = "GA.MATURE" ] ; then
+    if [[ ${matureOrg} == "GA.M" ]] || [[ ${matureOrg} == "GA.MATURE" ]]; then
         mature='.M'
-    elif [ ${matureOrg} = "GA.F" ]; then
+    elif [[ ${matureOrg} == "GA.F" ]]; then
         mature='.F'
     fi
 
