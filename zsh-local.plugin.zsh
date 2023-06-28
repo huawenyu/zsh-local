@@ -227,18 +227,15 @@ fi
 
 is-callable icdiff && { alias vimdiff="icdiff --line-numbers"; }
 is-callable vimdiff || { alias vimdiff="nvim -d"; }
+is-callable nvim && { alias gitlog="nvim -c GV"; }
 
-alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"
-alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"
-
-is-callable icdiff && { alias vimdiff="icdiff --line-numbers"; }
-alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"
-
-alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
+is-callable eclipse && { alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"; }
+is-callable xnview && { alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"; }
+is-callable tmux && { alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"; }
+#alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
 #    ln -s /drives/c/Windows/System32/drivers/ ./root
-
 
 # Use these lines to enable search by globs, e.g. gcc*foo.c
 #bindkey "^R" history-incremental-pattern-search-backward
