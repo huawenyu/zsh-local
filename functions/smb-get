@@ -11,6 +11,32 @@
 #   Version: FortiGate-VM64-KVM v7.2.1,build1220,220615 (Interim)
 #   Log: firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)
 #
+# Sample-1: FortiProxy normal build
+#   smb-get "firmware FortiProxy-4000E v7.0.8,build0122b0122,221215 (GA.M) (Release)"
+#   The real path: \FortiProxy\v7.00\images\build0122\FPX_4000E-v700.M-build0122-FORTINET.out.extra.tgz
+#
+# Sample-2: FortiProxy special branch
+#   smb-get "firmware FortiProxy-2000E v7.0.8,build8012b0122,230222 (interim)"
+#   The real path: \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_gui_frozen_b0122\build_tag_8012\FPX_2000E-v700-build8012-FORTINET.out.extra.tgz
+#
+#   smb-get "firmware FortiProxy-VM64 v7.0.10,build8033b0153,230513 (GA) (Release)"
+#   The real path: \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_dbs_fwdsvr_b0153\build_tag_8033\FPX_VMWARE-v700-build8033-FORTINET.deb.extra.tgz
+#
+# Sample-3: FOS 7.x: special-branch '7-0_wad_high_cpu' B8862
+#   smb-get "firmware FortiGate-3300E v7.0.12,build8862b0523,230715 (GA) (Release)"
+#   The real path: \FortiOS\v7.00\images\NoMainBranch\fg_7-0_wad_high_cpu\build_tag_8862\FGT_3300E-v7.0.12-build8862-FORTINET.out.extra.tgz
+#     Info-line:
+#       product:'Gate'
+#       ver:'7'-'7.0.12'
+#       model:'3300E'
+#       buildnum:'8862'
+#       branchnum:'0523'
+#       mature:'' from:'GA'
+#       release:'out' from:'Release'
+
+# https://stackoverflow.com/questions/53030233/what-is-the-zsh-equivalent-for-bash-rematch
+setopt BASH_REMATCH
+
 USAGE=$(cat <<-END
 	  Sample:
 	    smb-get image
@@ -18,6 +44,7 @@ USAGE=$(cat <<-END
 	    smb-get login
 
 	    smb-get 'FortiProxy-KVM v7.0.0,build0082,220527 (Interim)'
+        smb-get "firmware FortiGate-3300E v7.0.12,build8862b0523,230715 (GA) (Release)" -d "br_7-0_wad_high_cpu"
 	    smb-get 'FortiProxy-2000E v7.0.0,build8003b0110,221115 (GA) fortidev 6.0.1.0005'    <=== diag sys process pstack <pid>
 	    smb-get 'Version: FortiGate-2201E v7.2.4,build1357,221030 (interim)'   <== interim out version
 	    smb-get 'firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)'
@@ -31,6 +58,27 @@ if ! parse-args "$@" ; then
     echo "----------end--------------"
     return
 fi
+
+
+# Initialize local variable
+if [ -z ${_ZT_ARGS_Dst} ] ; then
+    is_gitdir=$(git rev-parse --is-inside-work-tree)
+    if [ ${is_gitdir} = "true" ]; then
+        branchName=$(git rev-parse --abbrev-ref HEAD)
+    else
+        echo "'`pwd`' is not git branch, please assign by -d '<special-branch-name>'"
+        exit 1
+    fi
+else
+    branchName=${_ZT_ARGS_Dst}
+fi
+
+tmpFile="/tmp/tmpfile_smbget1"
+tmpFile2="/tmp/tmpfile_smbget2"
+cmdStr="echo 'No command!'"
+rm -fr $tmpFile
+rm -fr $tmpFile2
+
 
 if [ "${_ZT_ARGS_Positional}" = "image" ]; then
     cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c '
@@ -107,14 +155,7 @@ if [ -z ${product} ] || [ -z ${mainver} ] || [ -z ${model} ] || [ -z ${buildnum}
     return 1
 fi
 
-
-if [ ${product} = "Proxy" ]; then
-    product='FPX'
-elif [ ${product} = "Gate" ]; then
-    product='FGT'
-fi
 model=${model/-/_}
-
 echo -e $dumpStr
 
 if [ ${_ZT_ARGS_Dryrun} = "true" ]; then
@@ -132,66 +173,147 @@ fi
 #
 #get FPX_KVM-v700-build0082-FORTINET.out.extra.tgz;'
 #get FGT_1000F-v7.0.6.F-build6315-FORTINET.out.extra.tgz
-if [ ${product} = "FPX" ]; then
+
+imgFilePrefix0="FortiProxy"
+if [[ ${product} == "Proxy" ]]; then
+    imgFilePrefix0="FortiProxy"
+    branchPrefix="fproxy_"
+elif [[ ${product} == "Gate" ]]; then
+    imgFilePrefix0="FortiOS"
+    branchPrefix="fg_"
+else
     if [ ${buildnum} = ${branchnum} ]; then
-        cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c ' \
-            cd FortiProxy/v${mainver}.00/images/build${buildnum}; \
-            get ${product}_${model}-v${mainver}00${mature}-build${buildnum}-FORTINET.${release}.extra.tgz; \
+        echo "List all: '${imgFilePrefix0}/v${mainver}.00/images/build${buildnum}'"
+        eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
+            cd ${imgFilePrefix0}/v${mainver}.00/images/build${buildnum}; \
+            ls *-FORTINET.out.extra.tgz; \
             '"
-    else
-        # Handle special branch:
-        # For example: firmware FortiProxy-2000E v7.0.8,build8012b0122,230222 (interim)
-        #
-        # Dummy-Loop-once
-        for i in $(seq 1); do
-            is_gitdir=$(git rev-parse --is-inside-work-tree)
-            if [ ${is_gitdir} = "true" ]; then
-                branchName=$(git rev-parse --abbrev-ref HEAD)
-                if [[ "$branchName" =~ .*"$branchnum".* ]]; then
-                    # \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_gui_frozen/build_tag_8003
-                    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
-                    cd FortiProxy/v${mainver}.00/images/NoMainBranch/${branchName//br_/fproxy_}/build_tag_${buildnum}; \
-                        get ${product}_${model}-v${mainver}00${mature}-build${buildnum}-FORTINET.${release}.extra.tgz; \
-                        '"
-                    break
+    fi
+    return 0
+fi
+
+
+if [ ${buildnum} = ${branchnum} ]; then
+    imgFilePrefix="${imgFilePrefix0}/v${mainver}.00/images"
+
+    imgFileDir="cd ${imgFilePrefix}/build${buildnum};"
+    imgFile_ls="cd ${imgFilePrefix}/build${buildnum};ls"
+    imgFile_grep="${model/VM64/VMWARE}-.*-build${buildnum}.*\.${release}\.extra\.tgz "
+
+    branchName=""
+    curState="stateBranchName"
+else
+    # Handle special branch:
+    #
+    # Output: \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_gui_frozen_b0122\build_tag_8012
+    #
+    imgFilePrefix="${imgFilePrefix0}/v${mainver}.00/images/NoMainBranch"
+
+    # First time, suppose current branch-name is correct,
+    #   for example, execute 'smb-get' just from the git-branch dir, or assign branch-name directly by '-d <branch-name>'
+    imgFileDir="cd ${imgFilePrefix}/${branchName/br_/$branchPrefix}/build_tag_${buildnum};"
+    imgFile_ls="cd ${imgFilePrefix}/${branchName/br_/$branchPrefix}/build_tag_${buildnum};ls"
+    imgFile_grep="${model/VM64/VMWARE}-.*-build${buildnum}.*\.${release}\.extra\.tgz "
+
+    curState="stateBranchName"
+fi
+
+
+    if [ $curState ]; then
+        # State: "stateBranchName" "stateGuessBranch" "stateGuessFile"  "stateGetFile" "stateExit"
+        for count in $(seq 1 5)
+        do
+            echo "\nState-${count}='$curState'"
+
+            # Check valid path, exit if invalid
+            if [[ $curState != "stateGuessBranch" ]]; then
+                smbclient -A ~/.smbclient.conf //imagesvr/Images -c "${imgFileDir}" 2>&1 > $tmpFile
+                if grep -q "NT_STATUS_OBJECT_PATH_NOT_FOUND" $tmpFile; then
+                    echo "Path not exit: ${imgFileDir}"
+                    if [[ $curState != "stateBranchName" ]]; then
+                        cmdStr="echo 'Path Error: ${imgFilePath}'"
+                        break
+                    fi
+
+                    curState="stateGuessBranch"
+                    continue
                 fi
             fi
 
-            if [ -z ${_ZT_ARGS_Dst} ] ; then
-                echo "'`pwd`' is not the special branch, try to guess the branch name! then used by -d '<branch-name>'"
 
-                # Output: \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_gui_frozen_b0122\build_tag_8012
-                cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c ' \
-                    cd FortiProxy/v${mainver}.00/images/NoMainBranch/;recurse;ls' \
-                    | grep 'build_tag_${buildnum}' \
-                    "
+            if [[ $curState == "stateExit" ]]; then
+                break
+            elif [[ $curState == "stateBranchName" ]]; then
+                echo "Correct branch '${branchName}'"
+                curState="stateGetFile"
+            elif [[ $curState == "stateGuessBranch" ]]; then
+                # Suppose don't know branch-name, here try to guess the branch-name from build-number
+                #   for example, execute 'smb-get' from any other git-branch dir
+                echo "Remote path not exist: ${imgFileDir}, try guess branch-name by build-number, wait ..."
+                imgFileDir="cd ${imgFilePrefix}/;"
+                imgFile_ls="cd ${imgFilePrefix};recurse;ls"
+                imgFile_grep="build_tag_${buildnum} "
+                curState="stateGuessFile"
+            elif [[ $curState == "stateGuessFile" ]]; then
+                # \FortiProxy\v7.00\images\NoMainBranch\fproxy_7-0_dbs_fwdsvr_b0153
+                #   build_tag_8033                      D        0  Fri May 12 20:12:45 2023
+                cat $tmpFile2 | grep -B1 "build_tag_${buildnum} "
+
+                imgFilePath=$( cat $tmpFile2 | grep -B1 "build_tag_${buildnum} " | head -n1 | sed -r 's,\\,/,g' )
+                imgFileDir="cd ${imgFilePath}/build_tag_${buildnum};"
+                imgFile_ls="cd ${imgFilePath}/build_tag_${buildnum};ls"
+                imgFile_grep="${model/VM64/VMWARE}-.*-build${buildnum}.*\.${release}\.extra\.tgz "
+
+                branchName=$( echo "$imgFilePath" | rev | cut -d '/' -f1 | rev )
+                echo "branchName=$branchName"
+                curState="stateGetFile"
+            elif [[ $curState == "stateGetFile" ]]; then
+                echo "file1"
+                cat $tmpFile
+                echo "file2"
+                cat $tmpFile2
+
+                imgFileStr=$( cat $tmpFile2 )
+                if [[ $imgFileStr =~ "(\S+) " ]]; then
+                    fileName=${BASH_REMATCH[2]}
+                    if [[ -f "$fileName" ]]; then
+                        echo "Exit: $fileName exists, don't need get again!"
+                        break
+                    fi
+
+                    if [[ -z $branchName ]]; then
+                        cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+                            cd ${imgFilePrefix}/build${buildnum}; \
+                            get ${fileName}; \
+                            '"
+                    else
+                        cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
+                            cd ${imgFilePrefix}/${branchName/br_/$branchPrefix}/build_tag_${buildnum}; \
+                            get ${fileName}; \
+                            '"
+                    fi
+                fi
+                break
             else
-                # FPX_2000E-v700-build8012-FORTINET.out.extra.tgz
-                cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '
-                cd ${_ZT_ARGS_Dst}; \
-                    get ${product}_${model}-v${mainver}00${mature}-build${buildnum}-FORTINET.${release}.extra.tgz; \
-                    '"
+                echo "\n-------------------\n"
+                cat $tmpFile2
+                echo "\n-------------------\n"
+                cat $tmpFile
+                echo "\n-------------------\n"
+                cmdStr="echo 'Exit: State error - ${curState}'"
             fi
+
+
+            do-echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '${imgFile_ls}' 2>&1 | grep -E '${imgFile_grep}'"
+            # grep -m 1 -E "${imgFile_grep}" > $tmpFile <(smbclient -A ~/.smbclient.conf //imagesvr/Images -c "${imgFile_ls}" 2>&1 | grep -E "NoMainBranch|${imgFile_grep}" | tee $tmpFile2)
+            grep -m 1 -E "${imgFile_grep}" > $tmpFile \
+                <(smbclient -A ~/.smbclient.conf //imagesvr/Images -c "${imgFile_ls}" 2>&1 \
+                  | grep -E "NoMainBranch|${imgFile_grep}" \
+                  | tee $tmpFile2)
+
         done
     fi
-elif [ ${product} = "FGT" ]; then
-    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v${mainver}.00/images/build${buildnum}; \
-        get ${product}_${model}-v${mainver}${mature}-build${buildnum}-FORTINET.${release}.extra.tgz; \
-        '"
-elif [ ${product} = "fos701" ]; then
-    echo "smbclient -A ~/.smbclient.conf //imagesvr/Images -c 'cd FortiOS/v7.00/images/build${buildnum}; get ${model}-v7.0.1-build${buildnum}-FORTINET.out.extra.tgz;'"
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v7.00/images/build${buildnum}; \
-        get ${model}-v7.0.1-build${buildnum}-FORTINET.${release}.extra.tgz; \
-        '"
-elif [ ${product} = "ls" ]; then
-    eval "smbclient -A ~/.smbclient.conf //imagesvr/Images -c '\
-        cd FortiOS/v${mainver}.00/images/build${buildnum}; \
-        ls *-FORTINET.out.extra.tgz; \
-        '"
-    return 0
-fi
+
 
 do-echo ${cmdStr}
 if [ ${_ZT_ARGS_Dryrun} = "true" ]; then
