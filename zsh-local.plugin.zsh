@@ -330,7 +330,7 @@ fi
 #bindkey -v
 
 if command -v vim.basic &> /dev/null; then
-	export MANPAGER="vim.basic -c ASMANPAGER -"
+	export MANPAGER="vim.basic -c 'set wrap' -c ASMANPAGER -"
 	export MANWIDTH=999
 fi
 
