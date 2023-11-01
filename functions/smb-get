@@ -67,7 +67,7 @@ if [ -z ${_ZT_ARGS_Dst} ] ; then
         branchName=$(git rev-parse --abbrev-ref HEAD)
     else
         echo "'`pwd`' is not git branch, please assign by -d '<special-branch-name>'"
-        exit 1
+        return 1
     fi
 else
     branchName=${_ZT_ARGS_Dst}
