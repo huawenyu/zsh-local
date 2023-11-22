@@ -200,6 +200,9 @@ fi
 #alias pwd=" pwd | sed 's/^/ /g'"
 #alias pwd=' pwd -L'
 
+# https://stackoverflow.com/questions/12996397/command-not-found-when-using-sudo
+alias mysudo='sudo -E env "PATH=$PATH"'
+
 ## sudo apt install -y tldr
 # Better-support customize dir: pip3 install tldr
 is-callable tldr && { alias m="tldr -p linux common -L en "; }
