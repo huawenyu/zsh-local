@@ -118,17 +118,31 @@ setopt share_history        # Share history between session/terminals
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-[ -d $HOME/dotwiki/lib/python ] && { export PYTHONPATH=".:$HOME/dotwiki/lib/python:$PYTHONPATH"; }
-[ -d $HOME/script/awk/awk-libs ] && { export AWKPATH=".:$HOME/script/awk/awk-libs:$AWKPATH"; }
-[ -d $HOME/script/awk ] && { export AWKPATH=".:$HOME/script/awk:$AWKPATH"; }
-[ -d $HOME/go ] && { export GOPATH=$HOME/go; }
-[ -d "/usr/lib/jvm/java-8-oracle" ] && { export JAVA_HOME="/usr/lib/jvm/java-8-oracle"; }
-# export JAVA_HOME="/usr/java/latest"
+apath="$HOME/dotwiki/lib/python" && \
+    [ -d "$apath" ]  && [[ ":$PATH:" != *":$apath:"* ]] && \
+    { export PYTHONPATH=".:$apath:$PYTHONPATH"; }
+apath="$HOME/script/awk/awk-libs" && \
+    [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
+    { export AWKPATH=".:$apath:$AWKPATH"; }
+apath="$HOME/script/awk" && \
+    [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
+    { export AWKPATH=".:$apath:$AWKPATH"; }
+apath="$HOME/go" && \
+    [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
+    { export GOPATH=".:$apath:$GOPATH"; }
+apath="/usr/lib/jvm/java-8-oracle" && \
+    [ -d "$apath" ]  && [[ ":$JAVA_HOME:" != *":$apath:"* ]] && \
+    { export JAVA_HOME=".:$apath:$JAVA_HOME"; }
+apath="/usr/java/latest" && \
+    [ -d "$apath" ]  && [[ ":$JAVA_HOME:" != *":$apath:"* ]] && \
+    { export JAVA_HOME=".:$apath:$JAVA_HOME"; }
 
 ## debug neovim python plugin:
 #export NVIM_PYTHON_LOG_FILE=/tmp/log
 #export NVIM_PYTHON_LOG_LEVEL=DEBUG
-[ -d $HOME/dotwiki/script/pretty-print ] && { export GDB_PRETTY_PRINT=$HOME/dotwiki/script/pretty-print; }
+apath="$HOME/dotwiki/script/pretty-print" && \
+    [ -d "$apath" ]  && [[ ":$JAVA_HOME:" != *":$apath:"* ]] && \
+    { export GDB_PRETTY_PRINT=".:$apath:$GDB_PRETTY_PRINT"; }
 
 # minicom line wrap: sudo -E minicom
 export MINICOM="-w"
@@ -323,7 +337,11 @@ if is-callable fzf; then
 	fi
 
 	# fzf: global config {{{3
-	export FZF_DEFAULT_OPTS="--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174"
+	if is-callable batcat; then
+	    export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "batcat --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	else
+	    export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "cat --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	fi
 
 	# see zplugin-init.zsh with Turbo Mode
 	[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
