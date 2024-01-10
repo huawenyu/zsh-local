@@ -338,7 +338,15 @@ if is-callable fzf; then
 
 	# fzf: global config {{{3
 	if is-callable batcat; then
-	    export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "batcat --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	    #export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "command -v batcat1 >/dev/null 2>&1 && batcat1 --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	    _OPTS='--multi'
+	    _OPTS+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
+	    _OPTS+=' --bind="ctrl-y:execute(readlink -f {} | xsel -b)"'
+	    _OPTS+=' --bind "ctrl-alt-y:execute-silent(xsel -b {})"'
+	    _OPTS+=' --preview "batcat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
+	    _OPTS+=' --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220'
+	    _OPTS+=' --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	    export FZF_DEFAULT_OPTS="${_OPTS}"
 	else
 	    export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "cat --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
 	fi
