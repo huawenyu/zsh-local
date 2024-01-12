@@ -119,7 +119,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 apath="$HOME/dotwiki/lib/python" && \
-    [ -d "$apath" ]  && [[ ":$PATH:" != *":$apath:"* ]] && \
+    [ -d "$apath" ]  && [[ ":$PYTHONPATH:" != *":$apath:"* ]] && \
     { export PYTHONPATH=".:$apath:$PYTHONPATH"; }
 apath="$HOME/script/awk/awk-libs" && \
     [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
@@ -128,7 +128,7 @@ apath="$HOME/script/awk" && \
     [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
     { export AWKPATH=".:$apath:$AWKPATH"; }
 apath="$HOME/go" && \
-    [ -d "$apath" ]  && [[ ":$AWKPATH:" != *":$apath:"* ]] && \
+    [ -d "$apath" ]  && [[ ":$GOPATH:" != *":$apath:"* ]] && \
     { export GOPATH=".:$apath:$GOPATH"; }
 apath="/usr/lib/jvm/java-8-oracle" && \
     [ -d "$apath" ]  && [[ ":$JAVA_HOME:" != *":$apath:"* ]] && \
@@ -337,19 +337,28 @@ if is-callable fzf; then
 	fi
 
 	# fzf: global config {{{3
+	_FZF_OPT='--header "Copy:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
+	_FZF_OPT+=' --multi'
+	_FZF_OPT+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
+	_FZF_OPT+=' --bind="ctrl-y:execute-silent(readlink -f {} | xsel -b)+abort"'
+	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xsel -b {})+abort"'
+	_FZF_OPT+=' --bind "ctrl-/:toggle-preview"'
+
 	if is-callable batcat; then
-	    #export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "command -v batcat1 >/dev/null 2>&1 && batcat1 --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
-	    _OPTS='--multi'
-	    _OPTS+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
-	    _OPTS+=' --bind="ctrl-y:execute(readlink -f {} | xsel -b)"'
-	    _OPTS+=' --bind "ctrl-alt-y:execute-silent(xsel -b {})"'
-	    _OPTS+=' --preview "batcat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
-	    _OPTS+=' --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220'
-	    _OPTS+=' --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
-	    export FZF_DEFAULT_OPTS="${_OPTS}"
+	    _FZF_OPT+=' --preview "batcat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
 	else
-	    export FZF_DEFAULT_OPTS='--bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down --preview "cat --style=numbers --color=always --line-range :500 {}" --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220 --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+	    _FZF_OPT+=' --preview "cat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
 	fi
+
+	_FZF_OPT+=' --preview-window "wrap"'
+	_FZF_OPT+=' --color header:italic'
+	_FZF_OPT+=' --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220'
+	_FZF_OPT+=' --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
+
+	export FZF_DEFAULT_OPTS="${_FZF_OPT}"
+	export FZF_CTRL_R_OPTS=" --preview-window 'up:3:hidden:wrap'    ${_FZF_OPT}"
+    export FZF_CTRL_T_OPTS=" --preview-window 'down:3:nohidden:wrap' ${_FZF_OPT}"
+    export FZF_ALT_C_OPTS="  --preview 'tree -C {}'    ${_FZF_OPT}"
 
 	# see zplugin-init.zsh with Turbo Mode
 	[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
