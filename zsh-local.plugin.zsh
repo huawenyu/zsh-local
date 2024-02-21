@@ -184,7 +184,7 @@ fi
 # dev-var
 export conf_fort=true
 # Also should set ftpsvr/sftpsvr in /etc/hosts
-export conf_use_sftp=false
+export conf_use_sftp=true
 chk-var $MYPATH_HEYTMUX || { export MYPATH_HEYTMUX="$HOME/script/heytmux"; }
 chk-var $MYPATH_WORKREF || { export MYPATH_WORKREF="$HOME/workref"; }
 chk-var $MYPATH_WORK    || { export MYPATH_WORK="$HOME/work"; }
@@ -217,34 +217,12 @@ fi
 # https://stackoverflow.com/questions/12996397/command-not-found-when-using-sudo
 alias mysudo='sudo -E env "PATH=$PATH"'
 
-## sudo apt install -y tldr
-# Better-support customize dir: pip3 install tldr
-is-callable tldr && { alias m="tldr -p linux common -L en" }
-is-callable tldr && is-callable fzf && { alias tl="tldr --list | fzf --preview 'tldr {}' | xargs tldr" }
-if is-callable tldr; then
-    #export TLDR_COLOR_NAME="cyan"
-    #export TLDR_COLOR_DESCRIPTION="white"
-    #export TLDR_COLOR_EXAMPLE="green"
-    #export TLDR_COLOR_COMMAND="red"
-    #export TLDR_COLOR_PARAMETER="white"
-    #export TLDR_LANGUAGE="es"
-    export TLDR_CACHE_ENABLED=0
-    #export TLDR_CACHE_MAX_AGE=720
-    #export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages"
-    export TLDR_PAGES_SOURCE_LOCATION="https://raw.githubusercontent.com/tldr-pages/tldr/master/pages; file://$HOME/dotwiki/tldr; file://$HOME/wiki/tldr; file://$HOME/dotfiles/tldr"
-    export TLDR_DOWNLOAD_CACHE_LOCATION="https://tldr-pages.github.io/assets/tldr.zip"
-fi
-
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
 #	alias x=thefuck
 #else
 #	echo "Install theFuck: pip3 install --user thefuck"
 #fi
-
-is-callable icdiff && { alias vimdiff="icdiff --line-numbers"; }
-is-callable vimdiff || { alias vimdiff="nvim -d"; }
-is-callable nvim && { alias gitlog="nvim -c GV"; }
 
 is-callable eclipse && { alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"; }
 is-callable xnview && { alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"; }
@@ -327,10 +305,10 @@ if ! is-callable fzf; then
 	fi
 fi
 
-if is-callable fzf; then
+if command -v fzf &> /dev/null; then
 	# https://github.com/junegunn/fzf/issues/1625
 	#   fzf acts like an interactive filter. Default search program is find, but can be changed via FZF_DEFAULT_COMMAND
-	if is-callable rg; then
+	if command -v rg &> /dev/null; then
 		export FZF_DEFAULT_COMMAND='rg --files --hidden --follow'
 		# To apply the command to CTRL-T as well: avoid cd **<TAB>, vi **<TAB> fail
 		export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
@@ -344,12 +322,13 @@ if is-callable fzf; then
 	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xsel -b {})+abort"'
 	_FZF_OPT+=' --bind "ctrl-/:toggle-preview"'
 
-	if is-callable batcat; then
-	    _FZF_OPT+=' --preview "batcat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
+	if command -v batcat &> /dev/null; then
+	    _FZF_OPT+=' --preview "batcat --color=always --style=numbers,header --line-range :500 {} 2> /dev/null"'
 	else
 	    _FZF_OPT+=' --preview "cat --style=numbers --color=always --line-range :500 {} 2> /dev/null"'
 	fi
 
+	_FZF_OPT+=' --ansi '
 	_FZF_OPT+=' --preview-window "wrap"'
 	_FZF_OPT+=' --color header:italic'
 	_FZF_OPT+=' --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220'
