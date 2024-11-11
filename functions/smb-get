@@ -43,6 +43,7 @@ USAGE=$(cat <<-END
 	    smb-get branch
 	    smb-get login
 
+	    smb-get "FortiOS/v7.00/images/build2639/FGT_101F-v7-build2639-FORTINET.deb.extra.tgz"    <=== Get from official-crash-parse-webpage
 	    smb-get 'FortiProxy-KVM v7.0.0,build0082,220527 (Interim)'
         smb-get "firmware FortiGate-3300E v7.0.12,build8862b0523,230715 (GA) (Release)" -d "br_7-0_wad_high_cpu"
 	    smb-get 'FortiProxy-2000E v7.0.0,build8003b0110,221115 (GA) fortidev 6.0.1.0005'    <=== diag sys process pstack <pid>
@@ -50,7 +51,8 @@ USAGE=$(cat <<-END
 	    smb-get 'firmware FortiGate-1100E v7.0.6,build0366b0366,220606 (GA.F) (Release)'
 
 	    smb-get "firmware FortiProxy-4000E v7.0.8,build0122b0122,221215 (GA.M) (Release)"
-	            Path: \FortiProxy\v7.00\images\build0122\FPX_4000E-v700.M-build0122-FORTINET.out.extra.tgz
+	            Path:    \FortiProxy\v7.00\images\build0122\FPX_4000E-v700.M-build0122-FORTINET.out.extra.tgz
+	            Path from official-crash-parser-webpage:   FortiOS/v7.00/images/build2639/FGT_101F-v7-build2639-FORTINET.deb.extra.tgz
 END
 )
 _ZT_ARGS_Usage=${USAGE}
@@ -81,7 +83,7 @@ rm -fr $tmpFile2
 
 
 if [ "${_ZT_ARGS_Positional}" = "image" ]; then
-    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c '
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c ' \
         cd FortiProxy/v7.00/images; \
         ls; \
         '"
@@ -89,7 +91,7 @@ if [ "${_ZT_ARGS_Positional}" = "image" ]; then
     do-cmd ${cmdStr}
     return
 elif [ "${_ZT_ARGS_Positional}" = "branch" ]; then
-    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c '
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c ' \
         cd FortiProxy/v7.00/images/NoMainBranch; \
         ls; \
         '"
@@ -103,6 +105,23 @@ elif [ "${_ZT_ARGS_Positional}" = "login" ]; then
     return
 fi
 
+
+# Args:  "FortiOS/v7.00/images/build2639/FGT_101F-v7-build2639-FORTINET.deb.extra.tgz"
+isPath=$(expr match "${_ZT_ARGS_Positional}" '.*\.extra\.tgz$')
+if [ -n "$isPath" ]; then
+    aDir=$(dirname "${_ZT_ARGS_Positional}")
+    aFile=$(basename "${_ZT_ARGS_Positional}")
+    cmdStr="smbclient -A ~/.smbclient.conf //imagesvr/images -c ' \
+        cd ${aDir}; \
+        get ${aFile}; \
+        '"
+    do-echo ${cmdStr}
+    do-cmd ${cmdStr}
+    return
+fi
+
+
+# Args:  "firmware FortiProxy-4000E v7.0.8,build0122b0122,221215 (GA.M) (Release)"
 product=$(expr match "${_ZT_ARGS_Positional}" '.*Forti\([[:alpha:]]*\)-.*$')
 mainver=$(expr match "${_ZT_ARGS_Positional}" '.* v\([[:digit:]]*\).*$')
 fullver=$(expr match "${_ZT_ARGS_Positional}" '.* v\(.*\),build.*$')
@@ -138,6 +157,7 @@ model=$(expr match "${_ZT_ARGS_Positional}" '^[^-]*-\([[:graph:]]*\).*$')
 # Output:
 read -r -d '' dumpStr << EndOfMessage
 Info-line:
+  path-directly:'$path'
   product:'$product'
   ver:'$mainver'-'$fullver'
   model:'$model'
