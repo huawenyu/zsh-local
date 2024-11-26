@@ -18,7 +18,6 @@ the_insert_paths=( \
 	"/usr/local/bin" \
 	"/usr/local/sbin" \
 	"/usr/.local/bin" \
-	"$HOME/.cargo/bin" \
 	"$HOME/perl5/bin" \
 	"$HOME/.linuxbrew/bin" \
 	"$HOME/.linuxbrew/sbin" \
@@ -274,6 +273,8 @@ export PERL_MB_OPT="--install_base $HOME/perl5";
 export PERL_MM_OPT="INSTALL_BASE=$HOME/perl5";
 export PERL5LIB="./lib:$HOME/perl5/lib:$PERL5LIB";
 alias  perldoctest='perl -MTest::Doctest -e run'
+
+[ -f  $HOME/.cargo/env ] && source $HOME/.cargo/env
 
 # used develop {{{2
 if $conf_fort ; then
