@@ -18,6 +18,7 @@ the_insert_paths=( \
 	"/usr/local/bin" \
 	"/usr/local/sbin" \
 	"/usr/.local/bin" \
+	"$HOME/.cargo/bin" \
 	"$HOME/perl5/bin" \
 	"$HOME/.linuxbrew/bin" \
 	"$HOME/.linuxbrew/sbin" \
