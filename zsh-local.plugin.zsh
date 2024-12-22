@@ -349,6 +349,8 @@ fi
 # Vi keybinding
 #bindkey -v
 
+export MANPATH=$MANPATH:$HOME/dotfiles/man
+
 if command -v vim.basic &> /dev/null; then
 	export MANPAGER="vim.basic -c 'set wrap' -c ASMANPAGER -"
 	export MANWIDTH=999
