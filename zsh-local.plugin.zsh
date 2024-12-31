@@ -321,8 +321,8 @@ if command -v fzf &> /dev/null; then
 	_FZF_OPT='--header "Copy:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
 	_FZF_OPT+=' --multi'
 	_FZF_OPT+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
-	_FZF_OPT+=' --bind="ctrl-y:execute-silent(readlink -f {} | xsel -b)+abort"'
-	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xsel -b {})+abort"'
+	_FZF_OPT+=' --bind="ctrl-y:execute-silent(readlink -f {} | xclip)+abort"'
+	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xclip {})+abort"'
 	_FZF_OPT+=' --bind "ctrl-/:toggle-preview"'
 
 	if command -v batcat &> /dev/null; then
@@ -352,7 +352,7 @@ fi
 export MANPATH=$MANPATH:$HOME/dotfiles/man
 
 if command -v vim.basic &> /dev/null; then
-	export MANPAGER="vim.basic -c 'set wrap' -c ASMANPAGER -"
+	export MANPAGER="vim.basic -c 'set wrap' -c MANPAGER -"
 	export MANWIDTH=999
 fi
 
