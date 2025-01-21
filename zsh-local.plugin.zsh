@@ -351,8 +351,8 @@ fi
 
 export MANPATH=$MANPATH:$HOME/dotfiles/man
 
-if command -v vim.basic &> /dev/null; then
-	export MANPAGER="vim.basic -c 'set wrap' -c MANPAGER -"
+if command -v vim &> /dev/null; then
+	export MANPAGER="vim -c 'set wrap' -c MANPAGER -"
 	export MANWIDTH=999
 fi
 
