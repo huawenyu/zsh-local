@@ -245,10 +245,10 @@ foreground-vi() {
 zle -N foreground-vi
 bindkey '^Z' foreground-vi
 
-# Try zman fc or zman HIST_IGNORE_SPACE! (Use n if the first match is not what you were looking for.)
-zman() {
-  PAGER="less -g -s '+/^       "$1"'" man zshall
-}
+# # Try zman fc or zman HIST_IGNORE_SPACE! (Use n if the first match is not what you were looking for.)
+# zman() {
+#   PAGER="less -g -s '+/^       "$1"'" man zshall
+# }
 
 # cd -<TAB>                 use dirs to display the dirstack,
 # zmv '(*).lis' '$1.txt'    dry-run mode -n
@@ -349,12 +349,10 @@ fi
 # Vi keybinding
 #bindkey -v
 
-export MANPATH=$MANPATH:$HOME/dotfiles/man
-
-if command -v vim &> /dev/null; then
-	export MANPAGER="vim -c 'set wrap' -c MANPAGER -"
-	export MANWIDTH=999
-fi
+# if command -v vim &> /dev/null; then
+#   export MANPAGER="vim -c 'set wrap' -c MANPAGER -"
+#   export MANWIDTH=999
+# fi
 
 # Don't use nvimpager:
 # - can't support tmux-vim-jump
