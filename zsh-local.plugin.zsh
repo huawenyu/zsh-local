@@ -333,7 +333,6 @@ if command -v fzf &> /dev/null; then
 
 	_FZF_OPT+=' --ansi '
 	_FZF_OPT+=' --preview-window "wrap"'
-	_FZF_OPT+=' --color header:italic'
 	_FZF_OPT+=' --color fg:-1,bg:-1,hl:178,fg+:3,bg+:233,hl+:220'
 	_FZF_OPT+=' --color info:150,prompt:110,spinner:150,pointer:167,marker:174'
 
