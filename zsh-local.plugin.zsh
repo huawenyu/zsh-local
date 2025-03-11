@@ -320,6 +320,7 @@ if command -v fzf &> /dev/null; then
 	# fzf: global config {{{3
 	_FZF_OPT='--header "Copy:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
 	_FZF_OPT+=' --multi'
+	_FZF_OPT+=' --reverse'
 	_FZF_OPT+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
 	_FZF_OPT+=' --bind="ctrl-y:execute-silent(readlink -f {} | xclip)+abort"'
 	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xclip {})+abort"'
