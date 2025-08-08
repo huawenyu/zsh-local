@@ -217,7 +217,8 @@ fi
 
 # https://stackoverflow.com/questions/12996397/command-not-found-when-using-sudo
 alias mysudo='sudo -E env "PATH=$PATH"'
-alias myssh='autossh -M 0 -o "ServerAliveInterval 60" -o "ServerAliveCountMax 3"'
+alias myssh_tunnel='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInterval 10" -o "ServerAliveCountMax 2" -o "TCPKeepAlive=yes" -o "ConnectTimeout=10" -N -v'
+alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInterval 10" -o "ServerAliveCountMax 2" -o "TCPKeepAlive=yes" -o "ConnectTimeout=10"'
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
