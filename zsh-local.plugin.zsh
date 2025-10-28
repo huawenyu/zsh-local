@@ -220,6 +220,7 @@ alias mysudo='sudo -E env "PATH=$PATH"'
 alias myssh_tunnel='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInterval 10" -o "ServerAliveCountMax 2" -o "TCPKeepAlive=yes" -o "ConnectTimeout=10" -N -v'
 alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInterval 10" -o "ServerAliveCountMax 2" -o "TCPKeepAlive=yes" -o "ConnectTimeout=10"'
 alias motd='run-parts /etc/update-motd.d/'
+alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
