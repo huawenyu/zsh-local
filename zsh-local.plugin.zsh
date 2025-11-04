@@ -178,7 +178,7 @@ if [ -f "$HOME/.local/local" ]; then
     #echo "load local succ!"
     source $HOME/.local/local
 else
-    do-echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
+    #do-echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
 fi
 
 
