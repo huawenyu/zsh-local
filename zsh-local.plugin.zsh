@@ -9,6 +9,15 @@
 # locale {{{2
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
+# my dev-var
+export conf_fort=true
+# Also should set ftpsvr/sftpsvr in /etc/hosts
+export conf_use_sftp=true
+[[ -n "$MYPATH_HEYTMUX" ]] || { export MYPATH_HEYTMUX="$HOME/script/heytmux"; }
+[[ -n "$MYPATH_WORKREF" ]] || { export MYPATH_WORKREF="$HOME/workref"; }
+[[ -n "$MYPATH_WORK" ]]    || { export MYPATH_WORK="$HOME/work"; }
+[[ -n "$MYPATH_WIKI" ]]    || { export MYPATH_WIKI="$HOME/work-doc"; }
+
 # The last path has highest priority, inserted in the front
 the_insert_paths=( \
 	"/snap/bin" \
@@ -181,15 +190,6 @@ else
     #do-echo "Harmless! [$me] no local-env loaded from '$HOME/.local/local', silent by `touch $HOME/.local/local`!"
 fi
 
-
-# dev-var
-export conf_fort=true
-# Also should set ftpsvr/sftpsvr in /etc/hosts
-export conf_use_sftp=true
-chk-var $MYPATH_HEYTMUX || { export MYPATH_HEYTMUX="$HOME/script/heytmux"; }
-chk-var $MYPATH_WORKREF || { export MYPATH_WORKREF="$HOME/workref"; }
-chk-var $MYPATH_WORK    || { export MYPATH_WORK="$HOME/work"; }
-chk-var $MYPATH_WIKI    || { export MYPATH_WIKI="$HOME/work-doc"; }
 
 # Cheat:
 # - Don't use the python version
