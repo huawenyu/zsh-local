@@ -41,6 +41,7 @@ the_insert_paths=( \
 	"$HOME/script" \
 	"$HOME/generator" \
 	"$HOME/dotwiki/tool" \
+	"$MYPATH_WORKREF/fortiproxyautotest/autolib/dev" \
 )
 
 # The first path has higher-priority, but the whole has low-priority then existed PATH
