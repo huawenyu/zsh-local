@@ -9,6 +9,13 @@
 # locale {{{2
 me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
 
+# Check docker
+if [ -f /.dockerenv ] || grep -Eq '(docker|containerd)' /proc/1/cgroup 2>/dev/null; then
+    var_InDocker=1
+else
+    var_InDocker=0
+fi
+
 # my dev-var
 export conf_fort=true
 # Also should set ftpsvr/sftpsvr in /etc/hosts
@@ -287,6 +294,15 @@ alias  perldoctest='perl -MTest::Doctest -e run'
 if $conf_fort ; then
     export USESUDO=$(which sudo)
     export FORTIPKG=$HOME/fortipkg
+fi
+
+
+# Use it later
+if command -v nvim &> /dev/null; then
+    if [[ "$var_InDocker" = "1" ]]; then
+        nvim --headless -c "UpdateRemotePlugins" -c "qa!"
+        nvim --headless -c "qa!"
+    fi
 fi
 
 
