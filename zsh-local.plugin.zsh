@@ -301,9 +301,9 @@ fi
 if command -v nvim &> /dev/null; then
     if [[ "$var_InDocker" = "1" ]]; then
         echo "Welcome Docker dev-env, initial [neovim] ..."
-        nvim --headless -c "PlugUpdate" -c "qa!"
-        nvim --headless -c "UpdateRemotePlugins" -c "qa!"
-        nvim --headless -c "qa!"
+        nvim --headless -c "PlugUpdate" -c "qa!"              > /dev/null 2> /dev/null
+        nvim --headless -c "UpdateRemotePlugins" -c "qa!"     > /dev/null 2> /dev/null
+        nvim --headless -c "qa!"                              > /dev/null 2> /dev/null
     fi
 fi
 
