@@ -289,6 +289,7 @@ export PERL5LIB="./lib:$HOME/perl5/lib:$PERL5LIB";
 alias  perldoctest='perl -MTest::Doctest -e run'
 
 [ -f  $HOME/.cargo/env ] && source $HOME/.cargo/env
+export CARGO_TARGET_DIR="$HOME/.cargo/target";
 
 # used develop {{{2
 if $conf_fort ; then
