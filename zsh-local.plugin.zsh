@@ -241,6 +241,7 @@ alias vimdiff='icdiff --line-numbers '
 is-callable eclipse && { alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"; }
 is-callable xnview && { alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"; }
 is-callable tmux && { alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"; }
+is-callable meson && { alias mbuild="meson setup build && ninja -C build && find build -type f -executable"; }
 #alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
