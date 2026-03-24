@@ -230,6 +230,8 @@ alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInt
 alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
+alias cld='claude'
+alias clr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
@@ -241,7 +243,7 @@ alias vimdiff='icdiff --line-numbers '
 is-callable eclipse && { alias eclipse="env SWT_GTK3=0 $HOME/tools/eclipse/eclipse &> /dev/null &"; }
 is-callable xnview && { alias xnview="nohup $HOME/tools/XnView/XnView &> /dev/null &"; }
 is-callable tmux && { alias tmuxkill="tmux ls | grep -v attached | cut -d: -f1 | xargs -r -I{} tmux kill-session -t {}"; }
-is-callable meson && { alias mbuild="meson setup build && ninja -C build && find build -maxdepth 1 -type f -executable"; }
+is-callable meson && { alias mbuild="meson setup builddir && ninja -C builddir && find builddir -maxdepth 1 -type f -executable"; }
 #alias sharepatch="cp patch.diff ~/share/.; cp fgtcoveragebuild.tar.xz ~/share/.; cp ../doc/checklist.txt ~/share/."
 
 # fake sudo vim ~/root/etc/hosts
