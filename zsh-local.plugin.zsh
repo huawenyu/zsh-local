@@ -230,8 +230,20 @@ alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInt
 alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
-alias cld='claude'
-alias clr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
+alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
+
+# Alias like function
+sshtx() {
+    # Check if the first argument is empty or a help flag
+    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "Usage: sshtx [server_name]"
+        echo "      'tmux new -As default' on the specified server."
+        return 1
+    fi
+
+    ssh -t "$1" "tmux new -As default"
+}
+
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
