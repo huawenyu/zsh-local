@@ -231,9 +231,26 @@ alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
 alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/share/me-yadm --yadm-repo $HOME/.local/share/me-yadm/repo.git"
-alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
 
 # Alias like function
+### alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
+cldr() {
+    # Check if the first argument is empty or a help flag
+    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "Usage: cldr resume session if exit"
+        echo "      'claude --resume <sid>"
+        return 1
+    fi
+
+
+    if grep -Eq "[a-f0-9-]{36}"  "$(git rev-parse --show-toplevel)/CLAUDE.md"; then
+        claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)
+    else
+        claude
+    fi
+}
+
+### ssh -t server "tmux new -As default"
 sshtx() {
     # Check if the first argument is empty or a help flag
     if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
