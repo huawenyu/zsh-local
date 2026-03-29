@@ -235,8 +235,8 @@ alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/sh
 # Alias like function
 ### alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
 cldr() {
-    # Check if the first argument is empty or a help flag
-    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
+    # Check if the first argument is a help flag
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
         echo "Usage: cldr resume session if exit"
         echo "      'claude --resume <sid>"
         return 1
