@@ -230,6 +230,7 @@ alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInt
 alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
+alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/share/me-yadm --yadm-repo $HOME/.local/share/me-yadm/repo.git"
 alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
 
 # Alias like function
