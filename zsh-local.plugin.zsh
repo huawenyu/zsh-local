@@ -233,23 +233,6 @@ alias vimdiff='icdiff --line-numbers '
 alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/share/me-yadm --yadm-repo $HOME/.local/share/me-yadm/repo.git"
 
 # Alias like function
-### alias cldr='claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)'
-cldr() {
-    # Check if the first argument is a help flag
-    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-        echo "Usage: cldr resume session if exit"
-        echo "      'claude --resume <sid>"
-        return 1
-    fi
-
-
-    if grep -Eq "[a-f0-9-]{36}"  "$(git rev-parse --show-toplevel)/CLAUDE.md"; then
-        claude --resume $(grep -oE "[a-f0-9-]{36}" CLAUDE.md | head -1)
-    else
-        claude
-    fi
-}
-
 ### ssh -t server "tmux new -As default"
 sshtx() {
     # Check if the first argument is empty or a help flag
@@ -259,7 +242,13 @@ sshtx() {
         return 1
     fi
 
-    ssh -t "$1" "tmux new -As default"
+    if [ "$#" -eq 1 ]; then
+        ssh -t "$1" "tmux new -As default"
+    elif [ "$#" -eq 2 ]; then
+        ssh -t "$1" "tmux new -As $2"
+    else
+        echo "Expected 1 or 2 arguments, but got $#"
+    fi
 }
 
 
