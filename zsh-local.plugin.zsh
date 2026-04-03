@@ -245,7 +245,7 @@ sshtx() {
     if [ "$#" -eq 1 ]; then
         ssh -t "$1" "tmux new -As default"
     elif [ "$#" -eq 2 ]; then
-        ssh -t "$1" "tmux new -As $2"
+        ssh -t "$1" "tmux new -As '$2'"
     else
         echo "Expected 1 or 2 arguments, but got $#"
     fi
