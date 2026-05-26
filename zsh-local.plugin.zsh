@@ -232,8 +232,7 @@ alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysi
 alias vimdiff='icdiff --line-numbers '
 alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/share/me-yadm --yadm-repo $HOME/.local/share/me-yadm/repo.git"
 
-# Alias like function
-### ssh -t server "tmux new -As default"
+### Alias: ssh -t server "tmux new -As default"
 sshtx() {
     # Check if the first argument is empty or a help flag
     if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
@@ -251,6 +250,113 @@ sshtx() {
     fi
 }
 
+### Alias: ssh -t server "cd <dir> && exec nvim "
+rvi() {
+    local base_root="${RVIM_HOME:-$HOME/workref}"
+    local state_file="$HOME/.rvi_state"
+
+    # STRICT defaults (no shared semantic space)
+    local DEFAULT_SERVER="work"
+    local DEFAULT_PROJECT="fortios"
+
+    local server=""
+    local project=""
+
+    # -------------------------
+    # load state safely
+    # -------------------------
+    if [[ -f "$state_file" ]]; then
+        local json
+        json=$(cat "$state_file")
+        # Extract value from key:value pair, avoiding cross-contamination
+        server="${json#*'"server"':}"
+        server="${server%%,*}"
+        server="${server#*\"}"
+        server="${server%\"*}"
+
+        project="${json#*'"project"':}"
+        project="${project%%,*}"
+        project="${project#*\"}"
+        project="${project%\"*}"
+    fi
+
+    # -------------------------
+    # enforce strict fallback separation
+    # -------------------------
+    [[ -z "$server" ]] && server="$DEFAULT_SERVER"
+    [[ -z "$project" ]] && project="$DEFAULT_PROJECT"
+
+    # -------------------------
+    # parse args
+    # -------------------------
+    if [[ "${1:-}" == "-s" ]]; then
+        server="$2"
+        shift 2
+    fi
+
+    if [[ -n "${1:-}" && "$1" == *@* ]]; then
+        server="${1%@*}"
+        project="${1#*@}"
+        shift
+
+    elif [[ -n "${1:-}" && "$1" != -* ]]; then
+        project="$1"
+        shift
+    fi
+
+    # -------------------------
+    # FINAL HARD SAFETY (CRITICAL)
+    # prevent cross-domain contamination
+    # only trigger if we loaded from state AND values are swapped
+    # -------------------------
+    if [[ -f "$state_file" ]]; then
+        case "$server" in
+            "$DEFAULT_PROJECT"|"$DEFAULT_SERVER")
+                # server matches a project name but we're in server slot — state corrupted
+                rm -f "$state_file"
+                server="$DEFAULT_SERVER"
+                ;;
+        esac
+
+        case "$project" in
+            "$DEFAULT_SERVER"|"$DEFAULT_PROJECT")
+                # project matches a server name but we're in project slot — state corrupted
+                rm -f "$state_file"
+                project="$DEFAULT_PROJECT"
+                ;;
+        esac
+    fi
+
+    # -------------------------
+    # validate project ONLY
+    # -------------------------
+    case "$project" in
+        */*|..*)
+            echo "[rvi] invalid project name: $project" >&2
+            return 1
+            ;;
+    esac
+
+    # -------------------------
+    # persist state
+    # -------------------------
+    mkdir -p "$(dirname "$state_file")"
+    printf '{"server":"%s","project":"%s"}\n' \
+        "$server" "$project" > "$state_file"
+
+    # -------------------------
+    # execute
+    # -------------------------
+    local remote_path="$base_root/$project"
+    local cmd="cd -- \"$remote_path\" && exec nvim"
+
+    for a in "$@"; do
+        printf -v escaped '%q' "$a"
+        cmd+=" $escaped"
+    done
+
+    ssh -t "$server" "$cmd"
+}
 
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
