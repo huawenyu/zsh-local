@@ -416,7 +416,7 @@ is-callable rustc && { export RUST_SRC_PATH=$(rustc --print sysroot)/lib/rustlib
 # ENV-TERM {{{2
 # Customize to your needs...
 # Tmux recognize
-export TERM=screen-256color
+export TERM=xterm-256color
 export EDITOR='vim'
 
 export LIBVIRT_DEFAULT_URI="qemu:///system"
