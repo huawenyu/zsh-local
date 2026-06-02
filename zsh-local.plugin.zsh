@@ -355,17 +355,7 @@ rvi() {
         cmd+=" $escaped"
     done
 
-    # Use autossh if available, otherwise ssh
-    if is-callable autossh; then
-        autossh -M 0 \
-            -o "ServerAliveInterval 10" \
-            -o "ServerAliveCountMax 2" \
-            -o "TCPKeepAlive=yes" \
-            -o "ConnectTimeout=10" \
-            -t "$server" "$cmd"
-    else
-        ssh -t "$server" "$cmd"
-    fi
+    ssh -t "$server" "$cmd"
 }
 
 ## pip3 install thefuck --user
