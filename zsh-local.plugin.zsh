@@ -242,9 +242,30 @@ sshtx() {
     fi
 
     if [ "$#" -eq 1 ]; then
-        ssh -t "$1" "tmux new -As default"
+        # Use autossh if available, otherwise ssh
+        if is-callable autossh; then
+            autossh -M 0 \
+                -o "ServerAliveInterval 10" \
+                -o "ServerAliveCountMax 2" \
+                -o "TCPKeepAlive=yes" \
+                -o "ConnectTimeout=10" \
+                -t "$1" "tmux new -As default"
+        else
+            ssh -t "$1" "tmux new -As default"
+        fi
     elif [ "$#" -eq 2 ]; then
-        ssh -t "$1" "tmux new -As $2"
+
+        # Use autossh if available, otherwise ssh
+        if is-callable autossh; then
+            autossh -M 0 \
+                -o "ServerAliveInterval 10" \
+                -o "ServerAliveCountMax 2" \
+                -o "TCPKeepAlive=yes" \
+                -o "ConnectTimeout=10" \
+                -t "$1" "$2"
+        else
+            ssh -t "$1" "tmux new -As $2"
+        fi
     else
         echo "Expected 1 or 2 arguments, but got $#"
     fi
