@@ -230,45 +230,83 @@ alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInt
 alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
-alias me-yadm="yadm --yadm-dir $HOME/.config/me-yadm --yadm-data $HOME/.local/share/me-yadm --yadm-repo $HOME/.local/share/me-yadm/repo.git"
+alias me-yadm=yadme
 
 ### Alias: ssh -t server "tmux new -As default"
+# sshtx server
+# sshtx -J jump-svr server
 sshtx() {
-    # Check if the first argument is empty or a help flag
-    if [[ -z "$1" || "$1" == "-h" || "$1" == "--help" ]]; then
-        echo "Usage: sshtx [server_name]"
-        echo "      'tmux new -As default' on the specified server."
+    local proxy_opts=()
+
+    while getopts ":J:h" opt; do
+        case "$opt" in
+            J)
+                proxy_opts=(-J "$OPTARG")
+                ;;
+            h)
+                echo "Usage: sshtx [-J proxy-host] <server> [tmux-session]"
+                return 1
+                ;;
+            \?)
+                echo "Unknown option: -$OPTARG"
+                return 1
+                ;;
+            :)
+                echo "Option -$OPTARG requires an argument"
+                return 1
+                ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+
+    if [[ -z "$1" ]]; then
+        echo "Usage: sshtx [-J proxy-host] <server> [tmux-session]"
         return 1
     fi
 
-    if [ "$#" -eq 1 ]; then
-        # Use autossh if available, otherwise ssh
-        if is-callable autossh; then
-            autossh -M 0 \
-                -o "ServerAliveInterval 10" \
-                -o "ServerAliveCountMax 2" \
-                -o "TCPKeepAlive=yes" \
-                -o "ConnectTimeout=10" \
-                -t "$1" "tmux new -As default"
-        else
-            ssh -t "$1" "tmux new -As default"
-        fi
-    elif [ "$#" -eq 2 ]; then
+    local server="$1"
+    local session="${2:-default}"
 
-        # Use autossh if available, otherwise ssh
-        if is-callable autossh; then
-            autossh -M 0 \
-                -o "ServerAliveInterval 10" \
-                -o "ServerAliveCountMax 2" \
-                -o "TCPKeepAlive=yes" \
-                -o "ConnectTimeout=10" \
-                -t "$1" "$2"
-        else
-            ssh -t "$1" "tmux new -As $2"
-        fi
-    else
-        echo "Expected 1 or 2 arguments, but got $#"
+    local ssh_cmd=ssh
+    command -v autossh >/dev/null 2>&1 && ssh_cmd=autossh
+
+    local opts=(
+        -o ServerAliveInterval=10
+        -o ServerAliveCountMax=2
+        -o TCPKeepAlive=yes
+        -o ConnectTimeout=10
+        -t
+    )
+
+    if [[ "$ssh_cmd" == "autossh" ]]; then
+        opts=(-M 0 "${opts[@]}")
     fi
+
+    "$ssh_cmd" \
+        "${opts[@]}" \
+        "${proxy_opts[@]}" \
+        "$server" \
+        "tmux new -As '$session'"
+}
+
+
+znewtab() {
+    # Current tab position (0-based)
+    local cur
+    cur=$(zellij action current-tab-info --json | jq -r '.position')
+
+    # Number of tabs before creating the new one
+    local total
+    total=$(zellij action list-tabs --json | jq 'length')
+
+    # Create the new tab (becomes the last/current tab)
+    zellij action new-tab "$@"
+
+    # Move it left until it's after the original tab
+    local moves=$(( total - cur - 1 ))
+    for ((i=0; i<moves; i++)); do
+        zellij action move-tab left
+    done
 }
 
 ### Alias: ssh -t server "cd <dir> && exec nvim "
@@ -379,6 +417,213 @@ rvi() {
     ssh -t "$server" "$cmd"
 }
 
+
+
+rcmd() {
+    local target=""
+    local dryrun=0
+
+    # ---------------------------------------
+    # parse flags (order-independent, scan full list)
+    # ---------------------------------------
+    local -a remaining
+    remaining=()
+    while (( $# > 0 )); do
+        case "$1" in
+            -t)
+                target="$2"
+                shift 2
+                ;;
+            -n|--dryrun)
+                dryrun=1
+                shift
+                ;;
+            -h|--help)
+                cat <<'EOF'
+Usage:
+  rcmd [-t <server>] [-n] <command-string>
+  rcmd [-t <server>] [-n] <command...>
+
+Wrapper:
+  -t <server>     run remotely
+  -n              dry-run
+EOF
+                return 0
+                ;;
+            *)
+                remaining+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    (( ${#remaining[@]} == 0 )) && {
+        echo "rcmd: missing command" >&2
+        return 1
+    }
+
+    # ---------------------------------------
+    # build command
+    # ---------------------------------------
+    local cmd
+
+    if (( ${#remaining[@]} == 1 )); then
+        cmd="${remaining[1]}"
+    else
+        printf -v cmd '%q ' "${remaining[@]}"
+        cmd="${cmd% }"
+    fi
+
+    # ---------------------------------------
+    # dry-run
+    # ---------------------------------------
+    if (( dryrun )); then
+        echo "[rcmd] dry-run"
+        echo "mode: ${target:+remote }${target:-local}"
+        [[ -n "$target" ]] && echo "server: $target"
+        echo
+        echo "$cmd"
+        return 0
+    fi
+
+    # ---------------------------------------
+    # execute
+    # ---------------------------------------
+    if [[ -n "$target" ]]; then
+        # Remote: %q-escape so spaces survive local→remote expansion
+        local remote_cmd
+        if (( ${#remaining[@]} == 1 )); then
+            printf -v remote_cmd '%q' "${remaining[1]}"
+        else
+            # join first, then escape so spaces survive local→remote expansion
+            local joined
+            printf -v joined '%q ' "${remaining[@]}"
+            joined="${joined% }"
+            printf -v remote_cmd '%q' "$joined"
+        fi
+        ssh -t "$target" "bash -lc $remote_cmd"
+    else
+        # Local: use -- so spaces don't break bash -lc
+        bash -lc -- "$cmd"
+    fi
+}
+
+
+
+# Reverse the arguments by '-r':
+#   It now natively supports any command that expects the destination as the final argument
+#   (such as mv, cp, ln, rsync, scp, and tar).
+revcmd() {
+    (( $# == 0 )) && {
+        cat <<'EOF'
+Usage:
+  revcmd <cmd> <src...> <dst>
+      Native command syntax.
+
+  revcmd <cmd> <dst> <src...> --rev
+      Reverse source/destination order.
+
+Wrapper flags (any position):
+  --rev, -r        reverse src/dst order
+  --dryrun, -n    dry-run
+  --help, -h      show this help
+
+Supported commands:
+  mv, cp, ln, rsync, scp
+EOF
+        return 0
+    }
+
+    local rev=0 dryrun=0
+    local cmd=""
+
+    # Two-pass: first collect wrapper flags and identify cmd
+    local -a args_to_parse
+    args_to_parse=("$@")
+
+    # Pass 1: find cmd (first non-flag) and collect flags
+    local -a remaining
+    remaining=()
+    local found_cmd=0
+    for arg in "${args_to_parse[@]}"; do
+        if (( ! found_cmd )) && [[ "$arg" != -* ]]; then
+            cmd="$arg"
+            found_cmd=1
+        elif [[ "$arg" == -* ]]; then
+            case "$arg" in
+                --rev|-r)  rev=1 ;;
+                --dryrun|-n) dryrun=1 ;;
+                --help|-h)
+                    cat <<'EOF'
+Usage:
+  revcmd <cmd> <src...> <dst>
+      Native command syntax.
+
+  revcmd <cmd> <dst> <src...> --rev
+      Reverse source/destination order.
+
+Wrapper flags (any position):
+  --rev, -r        reverse src/dst order
+  --dryrun, -n    dry-run
+  --help, -h      show this help
+
+Supported commands:
+  mv, cp, ln, rsync, scp
+EOF
+                    return 0
+                    ;;
+                -?*)
+                    echo "revcmd: unknown flag: $arg" >&2
+                    return 1
+                    ;;
+            esac
+        else
+            remaining+=("$arg")
+        fi
+    done
+
+    [[ -z "$cmd" ]] && {
+        echo "revcmd: missing command" >&2
+        return 1
+    }
+
+    # Build final command
+    local -a final
+    if (( rev )); then
+        if (( ${#remaining[@]} < 1 )); then
+            echo "Error: missing source or destination" >&2
+            return 1
+        fi
+        # --rev: first remaining is dst, rest are sources
+        local dst="${remaining[1]}"
+        local -a sources
+        sources=()
+        for ((i=2; i<=${#remaining}; i++)); do
+            sources+=("${remaining[$i]}")
+        done
+        final=("$cmd" "${sources[@]}" "$dst")
+    else
+        final=("$cmd" "${remaining[@]}")
+    fi
+
+    if (( dryrun )); then
+        # Show: what user typed  →  what will run
+        local orig_str dryrun_str
+        printf -v orig_str '%q ' "$cmd" "${remaining[@]}"
+        orig_str="${orig_str% }"
+        printf -v dryrun_str '%q ' "${final[@]}"
+        dryrun_str="${dryrun_str% }"
+        if (( rev )); then
+            printf '[dryrun] %s  →  %s\n' "$orig_str" "$dryrun_str"
+        else
+            printf '[dryrun] %s\n' "$orig_str"
+        fi
+    else
+        "${final[@]}"
+    fi
+}
+
+
 ## pip3 install thefuck --user
 #if command -v thefuck &> /dev/null; then
 #	alias x=thefuck
@@ -475,7 +720,7 @@ fi
 unset GNOME_KEYRING_CONTROL
 
 # fzf {{{2
-if ! is-callable fzf; then
+if ! command -v fzf &> /dev/null; then
 	if [ -f "$HOME/.fzf/bin/fzf" ]; then
 		mkdir -p "$HOME/bin"
 		ln -s "$HOME/.fzf/bin/fzf" "$HOME/bin/fzf"
@@ -492,12 +737,11 @@ if command -v fzf &> /dev/null; then
 	fi
 
 	# fzf: global config {{{3
-	_FZF_OPT='--header "Copy:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
+	_FZF_OPT='--header "Accept:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
 	_FZF_OPT+=' --multi'
 	_FZF_OPT+=' --reverse'
 	_FZF_OPT+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
-	_FZF_OPT+=' --bind="ctrl-y:execute-silent(readlink -f {} | xclip)+abort"'
-	_FZF_OPT+=' --bind "ctrl-alt-y:execute-silent(xclip {})+abort"'
+	_FZF_OPT+=' --bind="ctrl-y:accept"'
 	_FZF_OPT+=' --bind "ctrl-/:toggle-preview"'
 
 	if command -v batcat &> /dev/null; then
@@ -582,3 +826,4 @@ fi
 #######################################################################
 
 export LFTP_ATCMD="lftp --norc -c 'open -u ftpuser,ftpuser 172.16.80.139; set ftp:ssl-allow off; set xfer:clobber on; set ssl:verify-certificate no;'"
+
