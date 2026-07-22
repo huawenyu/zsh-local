@@ -41,7 +41,7 @@ the_insert_paths=( \
 	"/home/linuxbrew/.linuxbrew/bin" \
 	"/home/linuxbrew/.linuxbrew/sbin" \
 	"$HOME/.local/bin" \
-	"$HOME/.atuin/bin" \
+	"$HOME/go/bin" \
 	"$HOME/bin" \
 	"/opt/ActiveTcl-8.6/bin" \
 	"$HOME/script/python" \
