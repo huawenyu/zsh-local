@@ -230,11 +230,17 @@ alias myssh='AUTOSSH_POLL=5 AUTOSSH_FIRST_POLL=3 autossh -M 0 -o "ServerAliveInt
 alias motd='run-parts /etc/update-motd.d/'
 alias compdb='compiledb -S -n make -j$(grep -c ^processor /proc/cpuinfo) -C sysinit'
 alias vimdiff='icdiff --line-numbers '
-alias fr='rg --files --hidden -g "!.git" "$(git rev-parse --show-toplevel)" | fzf | tee /tmp/o'
 
 ### Get last command output as new command input
 ### vi `o`
 o() { cat /tmp/o }
+
+fr() {
+  local root
+  root=$(git rev-parse --show-toplevel) || return 1
+  rg --files --hidden -g '!.git' "$root" | fzf | tee /tmp/o
+  echo
+}
 
 ### Alias: ssh -t server "tmux new -As default"
 # sshtx server
