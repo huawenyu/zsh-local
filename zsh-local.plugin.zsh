@@ -236,10 +236,11 @@ alias vimdiff='icdiff --line-numbers '
 o() { cat /tmp/o }
 
 fr() {
-  local root
+  local root selected
   root=$(git rev-parse --show-toplevel) || return 1
-  rg --files --hidden -g '!.git' "$root" | fzf | tee /tmp/o
-  echo
+  selected=$(rg --files --hidden -g '!.git' "$root" | fzf)
+  [[ -n "$selected" ]] || return
+  printf '%s\n' "$selected" | tee /tmp/o
 }
 
 ### Alias: ssh -t server "tmux new -As default"
