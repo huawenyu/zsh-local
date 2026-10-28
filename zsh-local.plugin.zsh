@@ -48,6 +48,7 @@ the_insert_paths=( \
 	"$HOME/script" \
 	"$HOME/generator" \
 	"$HOME/dotwiki/tool" \
+	"$MYPATH_WORKREF/fortiproxyautotest" \
 	"$MYPATH_WORKREF/fortiproxyautotest/autolib/dev" \
 )
 
