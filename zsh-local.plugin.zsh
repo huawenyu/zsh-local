@@ -739,7 +739,42 @@ if ! command -v fzf &> /dev/null; then
 	fi
 fi
 
-if command -v fzf &> /dev/null; then
+if command -v sk &>/dev/null; then
+
+    # Default file discovery
+    if command -v rg &>/dev/null; then
+        export SKIM_DEFAULT_COMMAND='rg --files --hidden --follow'
+    fi
+
+    # Preview command
+    if command -v batcat &>/dev/null; then
+        _SK_PREVIEW='batcat --color=always --style=numbers,header --line-range :500 {} 2>/dev/null'
+    else
+        _SK_PREVIEW='cat {}'
+    fi
+
+    # Global options
+    _SK_OPT='--header="Accept:C-y Toggle:C-/ Select:<tab> C-np|A-np"'
+    _SK_OPT+=' --multi'
+    _SK_OPT+=' --reverse'
+    _SK_OPT+=' --bind=ctrl-q:select-all,ctrl-p:up,ctrl-n:down,alt-p:preview-up,alt-n:preview-down'
+    _SK_OPT+=' --bind=ctrl-y:accept'
+    _SK_OPT+=' --bind=ctrl-/:toggle-preview'
+    _SK_OPT+=" --preview='$_SK_PREVIEW'"
+    _SK_OPT+=' --ansi'
+    _SK_OPT+=' --preview-window=wrap'
+
+    # Colors: verify against your preferred terminal appearance
+    _SK_OPT+=' --color=fg:-1,bg:-1,matched:178,current:3,selected_bg:233'
+
+    export SKIM_DEFAULT_OPTIONS="${_SK_OPT}"
+
+    # Keep the original fzf-style preview positioning
+    export SKIM_DEFAULT_OPTIONS="${SKIM_DEFAULT_OPTIONS}"
+
+    source <(sk --shell zsh --shell-bindings)
+
+elif command -v fzf &> /dev/null; then
 	# https://github.com/junegunn/fzf/issues/1625
 	#   fzf acts like an interactive filter. Default search program is find, but can be changed via FZF_DEFAULT_COMMAND
 	if command -v rg &> /dev/null; then
@@ -775,6 +810,8 @@ if command -v fzf &> /dev/null; then
 	# see zplugin-init.zsh with Turbo Mode
 	[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 fi
+
+
 
 # Vi keybinding
 #bindkey -v
